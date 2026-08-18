@@ -1,0 +1,79 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+secrets/
+
+# Outputs and traces
+outputs/*.json
+outputs/*.jsonl
+outputs/*.log
+outputs/traces/
+!outputs/.gitkeep
+
+# SQLite trace storage (v0.4 B2) — runtime DB, regenerate via run_redteam
+storage/*.db
+storage/*.db-shm
+storage/*.db-wal
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Build and distribution
+build/
+dist/
+*.whl
+
+# Logs
+*.log
+logs/
+
+# Local config overrides (if any)
+configs/local.yaml
+configs/*.local.yaml
+
+# OS-specific
+.DS_Store
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# Keep the project structure visible
+!configs/
+!configs/default.yaml
+!data/
+!defenses/
+!attacks/
+!targets/
+!orchestrator/
+!scripts/
+!tests/
+!docs/

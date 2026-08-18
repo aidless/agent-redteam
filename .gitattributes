@@ -1,0 +1,34 @@
+# Agent Red Team Platform — git attributes
+# Ensures consistent line endings across OS (Windows CRLF vs Linux LF).
+# CI runs on Linux (ubuntu-latest) so LF is the canonical line ending.
+
+# Default: LF for all text files
+* text=auto eol=lf
+
+# Force LF explicitly for tracked Python / YAML / MD / shell / TOML
+*.py    text eol=lf
+*.pyi   text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.toml  text eol=lf
+*.txt   text eol=lf
+*.json  text eol=lf
+*.bib   text eol=lf
+*.tex   text eol=lf
+*.cfg   text eol=lf
+*.ini   text eol=lf
+
+# Shell scripts: LF (CI runs bash on Linux)
+*.sh    text eol=lf
+*.cmd   text eol=crlf
+
+# These should never have line-ending conversions or filters
+*.png   binary
+*.jpg   binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.db    binary
+*.db-shm binary
+*.db-wal binary

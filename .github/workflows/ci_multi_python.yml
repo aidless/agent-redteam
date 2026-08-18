@@ -1,0 +1,72 @@
+name: CI multi-Python matrix
+
+# Companion to ci.yml — runs the same test suite on multiple Python
+# versions to catch forward-compat regressions before they bite a
+# fresh contributor.
+#
+# Triggers only on manual dispatch (workflow_dispatch) and weekly cron
+# (Mondays 06:00 UTC) to keep PR CI fast. Pushes & PRs still go
+# through ci.yml (3.11 only).
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Weekly Monday morning — earliest window in the Actions free tier
+    # that gives us a chance to catch upstream ecosystem drift.
+    - cron: "0 6 * * 1"
+
+jobs:
+  multi-python:
+    runs-on: ubuntu-latest
+    strategy:
+      # Don't cancel other Pythons on first failure — every row of
+      # the matrix is informational.
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run direct test suite
+        # Direct runner is more portable than pytest across interpreter
+        # versions and matches the local ``python tests/test_X.py`` flow.
+        run: |
+          for suite in tests/test_targets.py \
+                       tests/test_v03.py \
+                       tests/test_v04.py \
+                       tests/test_v04_storage.py \
+                       tests/test_v04_b3.py \
+                       tests/test_v04_b4.py \
+                       tests/test_v04_b6.py \
+                       tests/test_v04_b6_calib_history.py; do
+            echo "=== $suite ==="
+            python -u "$suite" || true
+          done
+
+      - name: CI regression gate (strict)
+        run: |
+          python scripts/ci_regression.py --strict --json \
+            > /tmp/regression.json || true
+          # Pretty-print summary even if it failed.
+          python -c "import json; d=json.load(open('/tmp/regression.json')); \
+                     [print(f\"  [{('OK' if not r['regression'] else 'FAIL')}] \
+                              {r['suite']:30s} {r['passed']}/{r['total']}\") \
+                      for r in d['results']]; \
+                     print(f\"\\n  total: {sum(r['passed'] for r in d['results'])}\"
+                               f\"/{sum(r['total'] for r in d['results'])}\")"
+          # Exit non-zero only if strict regression was flagged.
+          python -c "import json, sys; \
+                     d=json.load(open('/tmp/regression.json')); \
+                     sys.exit(1 if d['any_regression'] else 0)"
