@@ -5,7 +5,7 @@
 openai==2.47.0          # OpenAI LLM target
 anthropic==0.118.0      # Anthropic LLM target
 streamlit==1.60.0       # Dashboard UI
-pandas>=2.2,<3         # Dashboard dataframes + tradeoff sweep (3.x not yet released)
+pandas>=3.0.6,<4         # Dashboard dataframes + tradeoff sweep (3.x not yet released)
 numpy>=2.0,<3           # Optional; metrics use pure-Python but dashboard may use numpy
 python-dotenv==1.2.2    # .env loading for API keys
 PyYAML==6.0.3           # configs/default.yaml parser
