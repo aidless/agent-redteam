@@ -11,4 +11,4 @@ python-dotenv==1.2.2    # .env loading for API keys
 PyYAML==6.0.3           # configs/default.yaml parser
 
 # --- Dev / test ---
-pytest==9.0.2           # CI + local `pytest tests/`
+pytest==9.1.1           # CI + local `pytest tests/`
