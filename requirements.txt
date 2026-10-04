@@ -2,7 +2,7 @@
 # Used by both local venv setup and CI (.github/workflows/ci.yml)
 
 # --- Core runtime ---
-openai==2.47.0          # OpenAI LLM target
+openai==3.22.1          # OpenAI LLM target
 anthropic==0.118.0      # Anthropic LLM target
 streamlit==1.60.0       # Dashboard UI
 pandas>=2.2,<3         # Dashboard dataframes + tradeoff sweep (3.x not yet released)
