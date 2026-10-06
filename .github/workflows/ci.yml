@@ -32,3 +32,312 @@ jobs:
           # Strict mode: exit 1 on any suite < baseline.
           # Surfaces silent regressions that soft mode (local default) would mask.
           python scripts/ci_regression.py --strict --json
+
+  # ---------------------------------------------------------------------------
+  # Job: mutation-control — prove the two judgement gates still fail.
+  #
+  # Both of these gates were de-fanged at some point and de-fanged again:
+  #   * ci_multi_python.yml ran `python -u "$suite" || true`, which pinned the
+  #     loop step to exit 0 no matter how many suites failed or did not exist.
+  #   * scripts/ci_regression.py used to treat a *missing* registered suite as a
+  #     skip, so deleting tests/test_v04_b6.py took the total from 93 to 68 and
+  #     the job still reported SUCCESS. Deleting coverage made the gate quieter.
+  # Commit 157e024 fixed both. Fixing them removed the fake green but proved
+  # nothing about the gates that are left, so this job supplies that proof:
+  # it deletes one registered suite and asserts both gates go non-zero.
+  #
+  # The gates are not retyped here. Each step's own `run:` block is extracted
+  # out of the workflow file at run time and executed as-is, so this job tests
+  # the step that actually runs and cannot drift away from it. A hand-copied
+  # gate can stay green forever after somebody weakens the real one.
+  #
+  # Fail-closed throughout: a dirty worktree aborts before anything is mutated,
+  # the baseline must be green or the job stops (a red gate on an already-red
+  # tree proves nothing), the mutation is only accepted if git reports the
+  # victim deleted, and every restore is verified against `git status`.
+  # ---------------------------------------------------------------------------
+  mutation-control:
+    name: mutation-control (gates fail closed)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: mutation-control
+        run: |
+          set -euo pipefail
+
+          # The mutation: remove one suite that scripts/ci_regression.py registers
+          # in BASELINE. Deleting registered coverage is precisely the regression
+          # the strict gate exists to catch.
+          VICTIM='tests/test_v04_b6.py'
+          LOGDIR="${RUNNER_TEMP:-/tmp}/mutation-control"
+          LAST_RC=0
+          LAST_LOG=''
+          mkdir -p "$LOGDIR"
+
+          # ---------------------------------------------------------------------
+          # Cache hygiene. Two staleness sources would let a mutated tree run
+          # pre-mutation code and report a false green:
+          #   * stale __pycache__/*.pyc — CPython reuses a .pyc whose recorded
+          #     source (mtime, size) still matches. mtime has one-second
+          #     granularity, so an edit that keeps the file size and lands in the
+          #     same second as the cached .pyc is ignored without a word. The
+          #     caches are deleted before and after every mutation, so the only
+          #     importable copy of the source is the current one on disk.
+          #   * .pytest_cache/lastfailed — not consulted by these gates, but
+          #     removing it stops a later `-x --ff` run in the same workspace
+          #     from inheriting state.
+          # ---------------------------------------------------------------------
+          purge_caches() {
+            find . -type d -name '__pycache__' -prune -exec rm -rf {} + 2>/dev/null || true
+            find . -type d -name '.pytest_cache' -prune -exec rm -rf {} + 2>/dev/null || true
+          }
+
+          tail_log() {
+            echo "  --- last 25 lines of $1 ---"
+            tail -n 25 "$1" | sed 's/^/    | /'
+          }
+
+          # probe <name> <cmd...> — run a gate, keep its exit code and its output.
+          probe() {
+            local name="$1"; shift
+            LAST_LOG="${LOGDIR}/${name}.log"
+            LAST_RC=0
+            "$@" >"$LAST_LOG" 2>&1 || LAST_RC=$?
+            printf '  probe %-30s exit=%s\n' "$name" "$LAST_RC"
+          }
+
+          expect_green() {
+            if [ "$LAST_RC" -ne 0 ]; then
+              echo "::error::$1 expected GREEN (exit 0) but exited $LAST_RC"
+              tail_log "$LAST_LOG"
+              return 1
+            fi
+            echo "  OK   $1 is green (exit 0)"
+          }
+
+          expect_red() {
+            if [ "$LAST_RC" -eq 0 ]; then
+              echo "::error::$1 expected a NON-ZERO exit but exited 0 -- the gate is a no-op"
+              tail_log "$LAST_LOG"
+              return 1
+            fi
+            echo "  OK   $1 went red as required (exit $LAST_RC)"
+          }
+
+          # ---------------------------------------------------------------------
+          # Extract the gates' own `run:` blocks. An anchor replacement that does
+          # not hit exactly once aborts the job: a silently-missed replacement
+          # would turn the toothless negative control into the real gate, and the
+          # control would then pass for entirely the wrong reason. A leftover
+          # ${{ ... }} aborts too — GitHub substitutes those before running, so an
+          # unsubstituted one means we would be testing a script CI never runs.
+          # ---------------------------------------------------------------------
+          python - "$LOGDIR" <<'PY'
+          import sys
+          from pathlib import Path
+
+          import yaml
+
+          out_dir = Path(sys.argv[1])
+
+          WANTED = [
+              # (workflow, job, step, output name, anchor, replacement)
+              (".github/workflows/ci.yml", "test",
+               "CI regression gate (strict)", "gate_regression.sh", "", ""),
+              (".github/workflows/ci_multi_python.yml", "multi-python",
+               "Run direct test suite", "gate_suite_loop.sh", "", ""),
+              # The historical fake green: `|| rc=1` put back to `|| true`.
+              (".github/workflows/ci_multi_python.yml", "multi-python",
+               "Run direct test suite", "gate_suite_loop_toothless.sh",
+               "|| rc=1", "|| true"),
+          ]
+
+          for wf, job, step, out_name, anchor, replacement in WANTED:
+              with open(wf, encoding="utf-8") as fh:
+                  cfg = yaml.safe_load(fh)
+              found = [s for s in cfg["jobs"][job]["steps"]
+                       if s.get("name") == step]
+              if len(found) != 1:
+                  sys.exit(f"{wf}#{job}: expected exactly 1 step named "
+                           f"{step!r}, found {len(found)}")
+              run = found[0].get("run") or ""
+              if not run.strip():
+                  sys.exit(f"{wf}#{job}/{step}: step has no run: block")
+              if anchor:
+                  hits = run.count(anchor)
+                  if hits != 1:
+                      sys.exit(f"{wf}#{job}/{step}: anchor {anchor!r} occurs "
+                               f"{hits} time(s), expected exactly 1")
+                  run = run.replace(anchor, replacement)
+              leftover = [ln for ln in run.splitlines() if "${{" in ln]
+              if leftover:
+                  sys.exit(f"{wf}#{job}/{step}: unsubstituted expression left "
+                           f"in run block: {leftover}")
+              (out_dir / out_name).write_text(run, encoding="utf-8")
+              print(f"  extracted {wf}#{job}/{step} -> {out_name}")
+          PY
+
+          # GitHub runs a `run:` block as `bash -e {0}` (no `shell:` key is set on
+          # either step). Same interpreter, same flags, so the exit code observed
+          # here is the exit code the gate really produces.
+          gate_regression()      { bash --noprofile --norc -e "$LOGDIR/gate_regression.sh"; }
+          gate_suite_loop()      { bash --noprofile --norc -e "$LOGDIR/gate_suite_loop.sh"; }
+          # Toothless forms used only by the negative control in phase 5.
+          toothless_regression() { bash --noprofile --norc -e "$LOGDIR/gate_regression.sh" || true; }
+          toothless_suite_loop() { bash --noprofile --norc -e "$LOGDIR/gate_suite_loop_toothless.sh"; }
+
+          # ---------------------------------------------------------------------
+          # Phase 0 — preflight
+          # ---------------------------------------------------------------------
+          echo "::group::phase 0 -- preflight"
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::worktree is dirty; mutation-control only runs on a clean tree"
+            git status --porcelain
+            exit 1
+          fi
+          git ls-files --error-unmatch "$VICTIM" >/dev/null 2>&1 \
+            || { echo "::error::$VICTIM is not tracked; cannot use it as the mutation"; exit 1; }
+          # The mutation is only meaningful if that suite is actually registered.
+          python - "$VICTIM" <<'PY'
+          import importlib.util
+          import sys
+
+          spec = importlib.util.spec_from_file_location(
+              "ci_regression_probe", "scripts/ci_regression.py")
+          mod = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(mod)
+          victim = sys.argv[1].rsplit("/", 1)[-1]
+          if victim not in mod.BASELINE:
+              sys.exit(f"{victim} is not in ci_regression.BASELINE -- "
+                       "the mutation would be vacuous")
+          print(f"  {victim} is registered in ci_regression.BASELINE "
+                f"(baseline={mod.BASELINE[victim]})")
+          PY
+          echo "::endgroup::"
+
+          # ---------------------------------------------------------------------
+          # Phase 1 — baseline. Fail closed: if a gate is not green here, stop.
+          # Injecting into an already-red tree would make the mutation meaningless.
+          # ---------------------------------------------------------------------
+          echo "::group::phase 1 -- baseline must be green"
+          purge_caches
+          probe baseline-regression gate_regression
+          expect_green "regression gate on the clean tree" || exit 1
+          probe baseline-suite-loop gate_suite_loop
+          expect_green "suite loop on the clean tree" || exit 1
+          echo "::endgroup::"
+
+          # ---------------------------------------------------------------------
+          # Phase 2 — inject the mutation
+          # ---------------------------------------------------------------------
+          echo "::group::phase 2 -- inject mutation"
+          rm -f "$VICTIM"
+          if [ -e "$VICTIM" ]; then
+            echo "::error::mutation did not take: $VICTIM is still present"
+            exit 1
+          fi
+          status_line="$(git status --porcelain -- "$VICTIM")"
+          case "$status_line" in
+            " D "*|"D "*) ;;
+            *)
+              echo "::error::expected $VICTIM to be deleted, git status says: ${status_line:-<clean>}"
+              exit 1
+              ;;
+          esac
+          purge_caches
+          echo "  mutation in place: $VICTIM removed (registered suite deleted)"
+          echo "::endgroup::"
+
+          # ---------------------------------------------------------------------
+          # Phase 3 — both gates must go red
+          # ---------------------------------------------------------------------
+          echo "::group::phase 3 -- both gates must go red"
+          probe mutated-regression gate_regression
+          expect_red "regression gate with $VICTIM removed" || exit 1
+          # Non-zero for the right reason: the deleted suite must be recorded as a
+          # regression, not merely trip some unrelated error.
+          if [ "$(grep -c '"any_regression": true' "$LAST_LOG" || true)" -lt 1 ]; then
+            echo "::error::regression gate exited non-zero but any_regression was not true"
+            tail_log "$LAST_LOG"
+            exit 1
+          fi
+          echo "  OK   any_regression=true in the gate's own JSON output"
+          probe mutated-suite-loop gate_suite_loop
+          expect_red "suite loop with $VICTIM removed" || exit 1
+          echo "::endgroup::"
+
+          # ---------------------------------------------------------------------
+          # Phase 4 — restore. Proves the mutation is fully reversible and leaves
+          # no residue behind.
+          # ---------------------------------------------------------------------
+          echo "::group::phase 4 -- restore and re-verify"
+          git checkout HEAD -- "$VICTIM"
+          if [ ! -e "$VICTIM" ]; then
+            echo "::error::restore failed: $VICTIM is missing"
+            exit 1
+          fi
+          purge_caches
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::worktree not clean after restore"
+            git status --porcelain
+            exit 1
+          fi
+          probe restored-regression gate_regression
+          expect_green "regression gate after restore" || exit 1
+          probe restored-suite-loop gate_suite_loop
+          expect_green "suite loop after restore" || exit 1
+          echo "::endgroup::"
+
+          # ---------------------------------------------------------------------
+          # Phase 5 — negative control. The point of this phase: prove the check
+          # above is not itself a shell that always says OK. Both gates are put
+          # back into their historical toothless shape while the mutation is
+          # active; each must then be REJECTED by expect_red. If either is
+          # accepted, this job would happily prove a gate that cannot fail.
+          # ---------------------------------------------------------------------
+          echo "::group::phase 5 -- negative control (the control must have teeth)"
+          rm -f "$VICTIM"
+          purge_caches
+          probe negcontrol-regression toothless_regression
+          if expect_red "regression gate wrapped in '|| true'"; then
+            echo "::error::the control accepted a toothless regression gate -- mutation-control is vacuous"
+            exit 1
+          else
+            echo "  OK   control rejected the toothless regression gate"
+          fi
+          probe negcontrol-suite-loop toothless_suite_loop
+          if expect_red "suite loop with the historical '|| true'"; then
+            echo "::error::the control accepted a toothless suite loop -- mutation-control is vacuous"
+            exit 1
+          else
+            echo "  OK   control rejected the toothless suite loop"
+          fi
+          git checkout HEAD -- "$VICTIM"
+          purge_caches
+          echo "::endgroup::"
+
+          # ---------------------------------------------------------------------
+          # Phase 6 — final integrity
+          # ---------------------------------------------------------------------
+          echo "::group::phase 6 -- final integrity"
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::mutation-control left the worktree dirty"
+            git status --porcelain
+            exit 1
+          fi
+          echo "  worktree clean — both gates proven fail-closed"
+          echo "::endgroup::"
+          echo "mutation-control: PASS — the gates have teeth."
