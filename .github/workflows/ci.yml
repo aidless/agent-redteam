@@ -142,7 +142,7 @@ jobs:
           # not hit exactly once aborts the job: a silently-missed replacement
           # would turn the toothless negative control into the real gate, and the
           # control would then pass for entirely the wrong reason. A leftover
-          # ${{ ... }} aborts too — GitHub substitutes those before running, so an
+          # Actions expression aborts too — GitHub substitutes those before running, so an
           # unsubstituted one means we would be testing a script CI never runs.
           # ---------------------------------------------------------------------
           python - "$LOGDIR" <<'PY'
@@ -182,7 +182,13 @@ jobs:
                       sys.exit(f"{wf}#{job}/{step}: anchor {anchor!r} occurs "
                                f"{hits} time(s), expected exactly 1")
                   run = run.replace(anchor, replacement)
-              leftover = [ln for ln in run.splitlines() if "${{" in ln]
+              # Concatenated rather than written out. Actions resolves every
+              # expression inside a run: block before the shell sees it, so a
+              # literal here becomes an unparseable expression and the whole
+              # workflow is rejected before any job starts. Naming the sequence
+              # in a comment does exactly the same thing.
+              unsub = "$" + "{{"
+              leftover = [ln for ln in run.splitlines() if unsub in ln]
               if leftover:
                   sys.exit(f"{wf}#{job}/{step}: unsubstituted expression left "
                            f"in run block: {leftover}")
