@@ -121,7 +121,22 @@ def evaluate(strict: bool) -> Tuple[List[dict], bool, List[str]]:
 
     for suite, baseline in BASELINE.items():
         if not (TESTS_DIR / suite).exists():
-            warnings.append(f"{suite}: missing test file (skipped)")
+            # A vanished suite is a regression, not a skip. Treating it as a skip
+            # meant deleting tests/test_v04_b6.py (25 cases) turned 93 tests into
+            # 68 and the whole job stayed SUCCESS -- removing coverage made the
+            # gate quieter. Fail closed instead.
+            warnings.append(f"{suite}: MISSING test file - counted as regression")
+            results.append({
+                "suite": suite,
+                "passed": 0,
+                "total": baseline,
+                "baseline": baseline,
+                "elapsed_seconds": 0.0,
+                "regression": True,
+                "parse_ok": False,
+                "missing": True,
+            })
+            any_regression = True
             continue
         # Recursion guard: if this suite is currently running this very
         # function, don't subprocess-run it again.

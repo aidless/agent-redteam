@@ -52,8 +52,12 @@ jobs:
                        tests/test_v04_b6.py \
                        tests/test_v04_b6_calib_history.py; do
             echo "=== $suite ==="
-            python -u "$suite" || true
+            # `|| true` pinned this step to exit 0: every suite could fail and the
+            # step would still be green. Accumulate the failure and exit non-zero
+            # after the loop, so one bad suite is reported but all of them still run.
+            python -u "$suite" || rc=1
           done
+          exit "${rc:-0}"
 
       - name: CI regression gate (strict)
         run: |
