@@ -144,10 +144,16 @@ and any matched patterns.
 
 ### CI/CD integration
 
-The platform can be run in CI as a regression test:
+The platform can be run in CI as a regression test. The first command below is
+real (`scripts/run_redteam.py` is in the tree); the second is a **sketch of a
+gate you would have to write yourself** -- `scripts/check_block_rate.py` does not
+exist in this repository, so copying the snippet verbatim fails at that step.
+
 ```yaml
 - name: Red team regression
   run: python scripts/run_redteam.py --rounds 500 --output outputs/ci_regression.json
+# You must supply this. Parse ci_regression.json, compute blocked/total, and
+# exit non-zero below your threshold. Do not expect it in the tree.
 - name: Fail if block rate drops below 80%
   run: python scripts/check_block_rate.py --threshold 0.80
 ```
