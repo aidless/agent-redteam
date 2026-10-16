@@ -1,10 +1,10 @@
 # Agent Red Team Platform
 
-> **Status:** v0.4 B6 — 86 pytest tests passing (1 skipped); CI regression gate 93/93 across 7 suites
+> **Status:** v0.4 B6 — 92 pytest tests passing (1 skipped); CI regression gate 93/93 across 7 suites
 > **Purpose:** Red-vs-blue security evaluation harness for multi-agent LLM systems
 > **License:** Apache 2.0
 
-![Tests](https://img.shields.io/badge/tests-86%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-92%20passing-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
@@ -12,7 +12,7 @@
 
 ## Test counts: two different denominators
 
-- **86** = `pytest tests/` passing (1 skipped) — the suite that guards the code.
+- **92** = `pytest tests/` passing (1 skipped) — the suite that guards the code.
 - **93** = `python scripts/ci_regression.py --strict`, covering 7 suites — the gate that guards the numbers.
 - **46** appears in the v0.4 B2/B3 changelog entries as a pre-B6 intermediate count and is kept for history only.
 
@@ -82,7 +82,7 @@ agent_redteam/
 │   ├── run_redteam.py         # Main runner (--mode {single,multi}, --record default on)
 │   ├── tradeoff.py            # [v0.3] Defense-autonomy sweep + run_tradeoff_recorded()
 │   └── dashboard.py           # Streamlit dashboard (4 tabs: Sim / Tradeoff / Calibration / History)
-├── tests/                     # pytest suite: 86 passing (1 skipped)
+├── tests/                     # pytest suite: 92 passing (1 skipped)
 │   ├── test_targets.py        # 9 — v0.2 LLM target smoke tests
 │   ├── test_v03.py            # 17 — v0.3 6-task additions
 │   ├── test_v04.py            # 9 — v0.4 B1 pluggable embedders
@@ -214,7 +214,7 @@ added in the camera-ready version.
     - **Local matrix result** (after D3):
       `3.10: 9+6+25+6=46 PASS | 3.11: 46 PASS | 3.12: 46 PASS`.
   - **Final state**:
-    - `pytest tests/` → **86 passed, 1 skipped in 28.31s** (exit 0)
+    - `pytest tests/` → **92 passed, 1 skipped** (exit 0)
     - `python scripts/ci_regression.py --strict` → **93/93 passed
       across 7 suites** (exit 0)
     - `python scripts/ci_multi_python.py --quick` → 3 Python × 4
