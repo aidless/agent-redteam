@@ -1,6 +1,6 @@
 # Agent Red Team Platform
 
-> **Status:** v0.4 B6 — 86 tests passing, CI/CD with multi-Python matrix, GitHub Actions
+> **Status:** v0.4 B6 — 86 pytest tests passing (1 skipped); CI regression gate 93/93 across 7 suites
 > **Purpose:** Red-vs-blue security evaluation harness for multi-agent LLM systems
 > **License:** Apache 2.0
 
@@ -9,6 +9,14 @@
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
 ---
+
+## Test counts: two different denominators
+
+- **86** = `pytest tests/` passing (1 skipped) — the suite that guards the code.
+- **93** = `python scripts/ci_regression.py --strict`, covering 7 suites — the gate that guards the numbers.
+- **46** appears in the v0.4 B2/B3 changelog entries as a pre-B6 intermediate count and is kept for history only.
+
+These measure different things. Do not add them together.
 
 ## What is this?
 
@@ -74,7 +82,7 @@ agent_redteam/
 │   ├── run_redteam.py         # Main runner (--mode {single,multi}, --record default on)
 │   ├── tradeoff.py            # [v0.3] Defense-autonomy sweep + run_tradeoff_recorded()
 │   └── dashboard.py           # Streamlit dashboard (4 tabs: Sim / Tradeoff / Calibration / History)
-├── tests/                     # 46 tests across 4 files
+├── tests/                     # pytest suite: 86 passing (1 skipped)
 │   ├── test_targets.py        # 9 — v0.2 LLM target smoke tests
 │   ├── test_v03.py            # 17 — v0.3 6-task additions
 │   ├── test_v04.py            # 9 — v0.4 B1 pluggable embedders
