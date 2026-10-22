@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+"""Build the static red-team coverage matrix."""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT / "demo") not in sys.path:
+    sys.path.insert(0, str(ROOT / "demo"))
+
+from harness import build_payload, write_payload  # noqa: E402
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", default=str(ROOT / "demo" / "public" / "matrix.json"))
+    ap.add_argument("--generated-at", default=None)
+    args = ap.parse_args()
+
+    payload = build_payload(generated_at=args.generated_at)
+    out = Path(args.out)
+    write_payload(out, payload)
+    summary = payload["summary"]
+    verification = payload["verification"]
+    print(f"wrote {out}")
+    print(f"attacks={summary['attacks']} mitigated={summary['mitigated']} "
+          f"blocked={summary['blocked']} flagged_only={summary['flagged_only']}")
+    print(f"expected_hit={summary['expected_hit']} "
+          f"expected_miss={summary['expected_miss']}")
+    print(f"verification={verification['status']}")
+    if verification["status"] == "MISMATCH":
+        print("mismatches=" + ", ".join(verification["mismatches"]))
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

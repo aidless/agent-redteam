@@ -27,6 +27,9 @@ jobs:
       - name: Run unit tests
         run: |
           python -m pytest tests/ -q
+      - name: Demo contract tests
+        run: |
+          python -m unittest demo/test_demo.py -v
       - name: CI regression gate (strict)
         run: |
           # Strict mode: exit 1 on any suite < baseline.

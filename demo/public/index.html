@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>agent-redteam · 攻击 × 防御覆盖矩阵</title>
+  <meta name="description" content="12 类攻击 × 5 层防御的层内覆盖矩阵：哪一层真的接住了哪一类？">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">agent-redteam · defense coverage</p>
+        <h1>攻击 × 防御层：<br>哪一层真的接住了哪一类？</h1>
+        <p class="lede">
+          每格来自真实 defense 类对真实攻击样本的检查。脚本化响应模拟一个会中招的目标；
+          这是<strong>层内覆盖矩阵</strong>，不是端到端多代理运行。
+        </p>
+      </div>
+      <div class="mode-card">
+        <span id="mode-badge" class="badge badge-neutral">加载中</span>
+        <p id="mode-note" class="mode-note">正在读取构建产物…</p>
+        <div class="mode-actions">
+          <button id="rerun" class="button" type="button" disabled>重跑矩阵</button>
+          <a id="raw-link" class="button button-ghost" href="./matrix.json" target="_blank" rel="noreferrer">查看 matrix.json</a>
+        </div>
+        <p id="rerun-status" class="rerun-status" aria-live="polite"></p>
+      </div>
+    </header>
+
+    <div id="error" class="error" hidden></div>
+
+    <section id="summary" class="summary" aria-label="覆盖摘要"></section>
+
+    <main class="layout">
+      <section class="panel matrix-panel" aria-labelledby="matrix-title">
+        <div class="panel-heading">
+          <h2 id="matrix-title">攻击 × 防御层</h2>
+          <span class="muted">点击一行查看 payload 与拒绝理由</span>
+        </div>
+        <div class="matrix-scroll">
+          <table id="matrix" class="matrix"></table>
+        </div>
+        <p class="muted matrix-legend">
+          手机端可左右滑动矩阵。BLOCK = 拦截 · MODIFY = 脱敏/截断 · FLAG = 标记但放行 · ALLOW = 未拦 · — = 本案例未行使该层
+        </p>
+      </section>
+
+      <aside class="panel detail-panel" aria-labelledby="case-title">
+        <div class="panel-heading">
+          <h2 id="case-title">案例</h2>
+          <span id="case-id" class="muted"></span>
+        </div>
+        <div id="case-meta" class="case-meta"></div>
+        <div id="verdict" class="verdict-block"></div>
+        <p id="case-payload" class="payload"></p>
+        <div id="expected" class="expected"></div>
+        <div id="actions" class="actions"></div>
+        <button id="raw-toggle" class="button button-ghost" type="button" aria-expanded="false">查看原始 case JSON</button>
+        <pre id="raw-json" class="raw-json" hidden></pre>
+      </aside>
+    </main>
+
+    <section class="panel layers" aria-labelledby="layers-title">
+      <div class="panel-heading">
+        <h2 id="layers-title">每层接住了多少</h2>
+        <span class="muted">按动作计数，不是攻击成功率</span>
+      </div>
+      <div id="layer-bars" class="layer-bars"></div>
+    </section>
+
+    <section class="panel boundaries" aria-labelledby="boundaries-title">
+      <div class="panel-heading">
+        <h2 id="boundaries-title">这个 Demo 不证明什么</h2>
+        <span class="muted">层内矩阵的边界</span>
+      </div>
+      <ul id="boundaries"></ul>
+    </section>
+
+    <section class="panel provenance" aria-labelledby="meta-title">
+      <div class="panel-heading">
+        <h2 id="meta-title">构建信息</h2>
+        <span class="muted">回放的是哪一次运行</span>
+      </div>
+      <dl id="meta"></dl>
+    </section>
+
+    <footer class="footer">
+      <p>
+        <strong>真实：</strong>攻击 payload 来自 <code>data/attack_vectors.json</code>；
+        每格由真实 <code>defenses/</code> 类检查；脚本化响应只负责模拟一个会中招的目标。
+        <strong>不是：</strong>端到端多代理运行、真实 LLM block rate、或生产 SLO。
+      </p>
+    </footer>
+  </div>
+  <noscript>这个页面需要 JavaScript 才能读取 matrix.json。</noscript>
+  <script src="./app.js"></script>
+</body>
+</html>

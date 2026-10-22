@@ -18,6 +18,18 @@
 
 These measure different things. Do not add them together.
 
+## Demo
+
+[Live demo](https://aidless.github.io/agent-redteam/) · [Demo docs](demo/README.md)
+
+A layer-coverage matrix: 12 attack vectors × 5 defense layers, each cell is the
+actual defense action (`BLOCK` / `MODIFY` / `FLAG` / `ALLOW` / not exercised).
+
+```bash
+python3 demo/server.py                  # http://127.0.0.1:8000/
+python3 -m unittest demo/test_demo.py -v
+```
+
 ## What is this?
 
 A reproducible evaluation platform that stress-tests multi-agent LLM systems
