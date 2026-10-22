@@ -2,12 +2,10 @@
   "meta": {
     "repo": "agent-redteam",
     "demo": "defense-coverage",
-    "commit": "a8bc5cc",
-    "worktree_dirty": true,
-    "dirty_paths": [
-      "demo/"
-    ],
-    "generated_at": "2026-10-22T07:21:56+00:00",
+    "commit": "e96269a",
+    "worktree_dirty": false,
+    "dirty_paths": [],
+    "generated_at": "2026-10-22T07:24:36+00:00",
     "mode": "layer-harness",
     "seed": null,
     "python": "3.12.3",
