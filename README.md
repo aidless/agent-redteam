@@ -23,7 +23,8 @@ These measure different things. Do not add them together.
 [Live demo](https://aidless.github.io/agent-redteam/) · [Demo docs](demo/README.md)
 
 A layer-coverage matrix: 12 attack vectors × 5 defense layers, each cell is the
-actual defense action (`BLOCK` / `MODIFY` / `FLAG` / `ALLOW` / not exercised).
+actual defense action (`BLOCK` / `MODIFY` / `FLAG` / `ALLOW` / not exercised),
+plus a leave-one-layer-out table for marginal contribution.
 
 ```bash
 python3 demo/server.py                  # http://127.0.0.1:8000/

@@ -239,6 +239,41 @@ function renderLayerBars(payload) {
   }
 }
 
+function renderLayerAblation(payload) {
+  const data = payload.layer_ablation;
+  const table = $("layer-ablation");
+  table.replaceChildren();
+  if (!data) {
+    $("layer-ablation-note").textContent = "层内 LOO 数据不可用。";
+    return;
+  }
+  const thead = el("thead");
+  const headRow = el("tr");
+  for (const label of [
+    "层", "mitigated", "blocked", "flagged-only", "unmitigated",
+    "lost mitigation", "lost flag", "lost expected hit",
+  ]) {
+    headRow.append(el("th", null, label));
+  }
+  thead.append(headRow);
+  table.append(thead);
+  const body = el("tbody");
+  for (const row of data.rows || []) {
+    const tr = el("tr");
+    tr.append(el("td", null, LAYER_LABELS[row.layer] || row.layer));
+    for (const key of ["mitigated", "blocked", "flagged_only", "unmitigated"]) {
+      tr.append(el("td", null, fmt(row[key])));
+    }
+    for (const key of ["lost_mitigation", "lost_flag", "lost_expected_hit"]) {
+      const cases = row[key] || [];
+      tr.append(el("td", null, cases.length ? cases.join(", ") : "—"));
+    }
+    body.append(tr);
+  }
+  table.append(body);
+  $("layer-ablation-note").textContent = data.note || "";
+}
+
 function renderBoundaries(payload) {
   const root = $("boundaries");
   root.replaceChildren();
@@ -289,6 +324,7 @@ function renderAll() {
   renderMatrix();
   renderDetail();
   renderLayerBars(state.payload);
+  renderLayerAblation(state.payload);
   renderBoundaries(state.payload);
   renderMeta(state.payload);
   renderMode();

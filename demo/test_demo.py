@@ -89,6 +89,7 @@ class DemoPayloadTest(unittest.TestCase):
         payload = self.payload
         self.assertEqual(payload["verification"]["status"], "MATCH")
         self.assertEqual(payload["verification"]["mismatches"], [])
+        self.assertEqual(len(payload["verification"]["checks"]), 18)
         by_id = {case["id"]: case for case in payload["cases"]}
         expected = {
             "V02_indirect_prompt_injection": ("input_separation", "block"),
@@ -150,12 +151,37 @@ class DemoPayloadTest(unittest.TestCase):
         self.assertFalse(v09["mitigated"])
         self.assertFalse(v09["blocked"])
 
+    def test_layer_ablation(self) -> None:
+        data = self.payload["layer_ablation"]
+        self.assertEqual(data["baseline"]["mitigated"], 11)
+        self.assertEqual(data["baseline"]["unmitigated"], 0)
+        rows = {row["layer"]: row for row in data["rows"]}
+        self.assertEqual(set(rows), set(LAYERS))
+        self.assertIn("V02_indirect_prompt_injection",
+                      rows["input_separation"]["lost_mitigation"])
+        self.assertIn("V05_tool_call_redirection",
+                      rows["tool_whitelist"]["lost_mitigation"])
+        self.assertIn("V07_output_exfiltration",
+                      rows["output_filter"]["lost_mitigation"])
+        self.assertIn("V03_jailbreak_templates",
+                      rows["constitutional"]["lost_mitigation"])
+        self.assertIn("V04_role_hijack",
+                      rows["constitutional"]["lost_mitigation"])
+        self.assertIn("V06_memory_poisoning",
+                      rows["behavior_audit"]["lost_mitigation"])
+        self.assertIn("V09_sybil_agent",
+                      rows["behavior_audit"]["lost_flag"])
+        self.assertIn("V08_aggregator_capture",
+                      rows["behavior_audit"]["lost_expected_hit"])
+
     def test_committed_artifact_matches_current_rows(self) -> None:
         artifact = PUBLIC / "matrix.json"
         self.assertTrue(artifact.exists(), "run demo/build_static.py first")
         committed = json.loads(artifact.read_text(encoding="utf-8"))
         self.assertEqual(case_contract(committed), case_contract(self.payload))
         self.assertEqual(committed["summary"], self.payload["summary"])
+        self.assertEqual(committed["layer_ablation"],
+                         self.payload["layer_ablation"])
 
     def test_reproducible_with_fixed_timestamp(self) -> None:
         second = build_payload(generated_at=FIXED_TIME)
@@ -207,7 +233,8 @@ class DemoGuardTest(unittest.TestCase):
         for element_id in (
             "mode-badge", "mode-note", "rerun", "summary", "matrix",
             "case-title", "case-meta", "verdict", "case-payload",
-            "expected", "actions", "layer-bars", "boundaries", "meta",
+            "expected", "actions", "layer-bars", "layer-ablation",
+            "layer-ablation-note", "boundaries", "meta",
         ):
             self.assertIn(f'id="{element_id}"', html, element_id)
 
