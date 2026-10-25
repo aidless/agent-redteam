@@ -180,7 +180,7 @@ to be operational.
 
 ### B6-B Git version control init
 
-- [x] **69 files committed** to parent `F:\Research` repo (68 source + `.gitattributes`)
+- [x] **69 files committed** to the parent research repo (68 source + `.gitattributes`)
 - [x] **`.gitattributes`** enforces `eol=lf` for all tracked text files + `eol=crlf` for Windows-only `.cmd` shims
 - [x] **`core.autocrlf=false`** set locally to prevent CRLF re-introduction
 

@@ -3,7 +3,7 @@
 Connects to a running llama.cpp server via its OpenAI-compatible HTTP API.
 The server is expected to be running on localhost:8080 (or a configurable URL).
 
-The companion project at C:/Users/Administrator/ZCodeProject/llama_cpp_integration/
+The companion `llama_cpp_integration` project (author's local workspace)
 provides a wrapper for starting/stopping the server. This target only consumes
 the HTTP API.
 
