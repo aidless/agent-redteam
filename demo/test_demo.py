@@ -284,3 +284,20 @@ class DemoServerTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestCliDemo(unittest.TestCase):
+    def test_cli_matrix_matches_payload(self):
+        import subprocess
+
+        proc = subprocess.run(
+            [sys.executable, "demo/cli.py"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("V12_compositional", proc.stdout)
+        self.assertIn("verification: MATCH", proc.stdout)
+        self.assertIn("synthetic attack payloads", proc.stdout)

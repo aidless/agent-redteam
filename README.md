@@ -31,6 +31,19 @@ python3 demo/server.py                  # http://127.0.0.1:8000/
 python3 -m unittest demo/test_demo.py -v
 ```
 
+### Terminal demo
+
+No server, no API key. The same harness prints the matrix in the terminal:
+
+```bash
+python3 demo/cli.py
+```
+
+![terminal coverage matrix](docs/assets/demo.gif)
+
+The matrix is layer-level over synthetic attack payloads; the defense actions
+are real. The CLI also prints the summary and the leave-one-layer-out losses.
+
 ## What is this?
 
 A reproducible evaluation platform that stress-tests multi-agent LLM systems
