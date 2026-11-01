@@ -1,10 +1,10 @@
 # Agent Red Team Platform
 
-> **Status:** v0.4 B6 — 92 pytest tests passing (1 skipped); CI regression gate 93/93 across 7 suites
+> **Status:** v0.4 B6 — 93 pytest tests passing (0 skipped); CI regression gate 93/93 across 8 suites
 > **Purpose:** Red-vs-blue security evaluation harness for multi-agent LLM systems
 > **License:** Apache 2.0
 
-![Tests](https://img.shields.io/badge/tests-92%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-93%20passing-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
@@ -12,8 +12,8 @@
 
 ## Test counts: two different denominators
 
-- **92** = `pytest tests/` passing (1 skipped) — the suite that guards the code.
-- **93** = `python scripts/ci_regression.py --strict`, covering 7 suites — the gate that guards the numbers.
+- **93** = `pytest tests/` passing (0 skipped, in this environment where `sentence-transformers` is installed) — the suite that guards the code. When `sentence-transformers` is *not* installed, `test_v04.py::test_sentence_transformer_if_available` skips instead of running, giving **92 passed, 1 skipped**; the gate still counts the skip as a pass, so the total stays 93.
+- **93** = `python scripts/ci_regression.py --strict`, covering 8 suites — the gate that guards the numbers.
 - **46** appears in the v0.4 B2/B3 changelog entries as a pre-B6 intermediate count and is kept for history only.
 
 These measure different things. Do not add them together.
@@ -161,6 +161,60 @@ python scripts/ci_multi_python.py --quick
 | §8.5 Compliance Context (EU AI Act) | v0.3: `configs/compliance_profiles.yaml` |
 | §8.6 Compositional Attacks | `data/attack_vectors.json::V12_compositional` |
 | §8.7 Defense–Autonomy Tradeoff | v0.2: cost / latency tracked per defense |
+
+## What is proven / what is not
+
+**Proven (reproducible in this repo):**
+
+1. **12 attack-vector classes** in `attacks/v01..v12_*.py` round-trip through `load_attack_vectors()`, and `data/attack_vectors.json` holds exactly **50 samples** whose per-vector counts sum to 50 (asserted in tests + verified by the reproduction command below).
+2. **5 defense layers** (`input_separation`, `tool_whitelist`, `output_filter`, `behavior_audit`, `constitutional`) each implement the `Defense` interface and each produces a concrete action (`BLOCK` / `MODIFY` / `FLAG` / `ALLOW`) on the demo matrix.
+3. **7 aggregators** collapse a `VerifierOutput` stream into an `AggregatedDecision` with label ∈ {0,1}, score ∈ [0,1], and per-verifier length matching (asserted in `tests/test_v04_b6.py`).
+4. **Calibration metrics** (ECE, JSD, entropy, CV, γ_temporal, γ) are computed from a deterministic synthetic score stream (`synth_score_stream(n, seed, bias)`), so they are reproducible given the seed.
+5. **Defense–autonomy tradeoff** is measurable: `scripts/tradeoff.py` sweeps defense subsets and reports Pareto-optimal points per subset.
+
+**Not proven (honest boundaries):**
+
+1. **No real-world attack success rate.** Attacks are synthetic payloads in `data/attack_vectors.json`; the demo matrix reports what *defense actions fire*, not whether a real attacker succeeds against a production system.
+2. **No LLM quality claims.** The mock target is deterministic and free; the OpenAI / Anthropic targets are thin API adapters with no benchmark results. `tests/test_targets.py` only smoke-tests `dry_run()`; no end-to-end real-LLM evaluation is included.
+3. **No production-readiness claim.** The SQLite recorder and Streamlit dashboard are demonstration-grade; no load testing, crash recovery, or multi-instance concurrency guarantees are asserted.
+4. **The demo matrix is layer-level over synthetic payloads.** A `BLOCK` on layer 2 does not imply the whole defense stack blocks that attack; only the leave-one-layer-out table estimates marginal contribution.
+
+## Reproduce (numbers used above)
+
+All counts below are recomputed from this repo; nothing is copied from memory.
+
+```bash
+# Full suite (authoritative pass count)
+python3 -m pytest tests/ -q
+# → 93 passed (0 skipped) when sentence-transformers installed
+
+# CI regression gate (strict — exit 1 if any suite < baseline)
+python3 scripts/ci_regression.py --strict
+# → 93/93 passing across 8 suites (exit 0)
+
+# Attack dataset counts (12 vectors, 50 samples, sums to 50)
+python3 - <<'EOF'
+import json
+from collections import Counter
+d = json.load(open("data/attack_vectors.json"))
+av = d["attack_vectors"]
+assert len(av) == 12
+assert sum(len(v["samples"]) for v in av) == 50
+sev = Counter(v["severity"] for v in av for _ in v["samples"])
+cat = Counter(v["category"] for v in av for _ in v["samples"])
+print("vectors:", len(av), "| samples:", sum(len(v["samples"]) for v in av))
+print("by_severity:", dict(sev))
+print("by_category:", dict(cat))
+EOF
+# → vectors: 12 | samples: 50
+#   by_severity: {'high': 24, 'medium': 17, 'critical': 9}
+#   by_category: {'input_attack': 19, 'tool_attack': 5, 'memory_attack': 4,
+#                 'output_attack': 9, 'aggregation_attack': 5,
+#                 'denial_of_service': 4, 'advanced_attack': 4}
+
+# Demo matrix (no API key)
+python3 demo/cli.py
+```
 
 ## License
 

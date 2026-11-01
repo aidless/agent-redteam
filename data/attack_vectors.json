@@ -473,18 +473,19 @@
     "by_severity": {
       "info": 0,
       "low": 0,
-      "medium": 16,
-      "high": 35,
-      "critical": 11
+      "medium": 17,
+      "high": 24,
+      "critical": 9
     },
     "by_category": {
-      "input_attack": 28,
-      "tool_attack": 7,
+      "input_attack": 19,
+      "tool_attack": 5,
       "memory_attack": 4,
-      "output_attack": 14,
+      "output_attack": 9,
       "aggregation_attack": 5,
       "denial_of_service": 4,
       "advanced_attack": 4
-    }
+    },
+    "_recomputed": "2026-11-01: summary_statistics recomputed from the 50 actual samples (prior block was stale: by_severity summed to 62, by_category to 66). Each sample inherits its vector-level severity/category."
   }
 }
