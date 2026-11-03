@@ -1,11 +1,11 @@
 # Agent Red Team Platform
 
-> **Status:** v0.4 B6 — 92 pytest tests passing (1 skipped); CI regression gate 93/93 across 7 suites
+> **Status:** v0.4 B6 — 92 passed / 1 skipped (93 collected); CI regression gate 93/93 across 7 suites
 > **Purpose:** Red-vs-blue security evaluation harness for multi-agent LLM systems
 > **License:** Apache 2.0
 
-![Tests](https://img.shields.io/badge/tests-92%20passing-brightgreen)
-![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
+[![CI](https://github.com/aidless/agent-redteam/actions/workflows/ci.yml/badge.svg)](https://github.com/aidless/agent-redteam/actions/workflows/ci.yml)
+[![CI multi-Python](https://github.com/aidless/agent-redteam/actions/workflows/ci_multi_python.yml/badge.svg)](https://github.com/aidless/agent-redteam/actions/workflows/ci_multi_python.yml)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
 ---
