@@ -1,7 +1,7 @@
 """Defense layer implementations for multi-agent LLM systems.
 
 This package implements the 5 defense layers described in §8.3 of the
-survey (F:/Research/PAPER_SURVEY/llm_agent_calibration_survey.md).
+survey, section 8.3. The survey text is not in this repository.
 
 The 5 layers form a defense-in-depth stack:
 1. input_separation  — Trust boundary between user input and retrieved content

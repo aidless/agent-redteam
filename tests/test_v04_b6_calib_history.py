@@ -205,18 +205,5 @@ if __name__ == "__main__":
         test_ch5_calibration_source_tags_contains_canonical_tags,
         test_ch6_dashboard_has_calibration_history_tab,
     ]
-    passed = failed = 0
-    SKIP_TYPES = ("_Skip", "Skipped")
-    for t in tests:
-        try:
-            t()
-            passed += 1
-        except BaseException as e:
-            if type(e).__name__ in SKIP_TYPES:
-                passed += 1
-                print(f"  skip  {t.__name__}: {e}")
-                continue
-            print(f"  FAIL  {t.__name__}: {type(e).__name__}: {e}")
-            failed += 1
-    print(f"\n{passed}/{passed+failed} tests passed")
-    sys.exit(0 if failed == 0 else 1)
+    from scripts.suite_inventory import execute_direct
+    sys.exit(execute_direct([(t.__name__, t) for t in tests]))

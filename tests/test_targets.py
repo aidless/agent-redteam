@@ -1,8 +1,8 @@
 """Smoke tests for LLM targets.
 
 Run:
-    .venv/Scripts/python.exe -m pytest tests/test_targets.py -v
-    .venv/Scripts/python.exe tests/test_targets.py  # standalone
+    python -m pytest tests/test_targets.py -v
+    python tests/test_targets.py  # standalone
 """
 
 from __future__ import annotations

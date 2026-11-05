@@ -230,7 +230,7 @@ class SentenceTransformerEmbedder(Embedder):
         except ImportError as e:
             raise ImportError(
                 "sentence-transformers is not installed. "
-                "Run: uv pip install --python .venv/Scripts/python.exe sentence-transformers"
+                "Run: pip install sentence-transformers"
             ) from e
         self.model_name = model_name
         # offline by default; the model is cached after first download

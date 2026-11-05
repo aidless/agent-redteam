@@ -1,7 +1,26 @@
 # Agent Red Team Platform — Project Status
 
-**Status:** v0.4 B5 (polish: requirements.txt + local pytest + CI indent + 3 latent-bug fixes, 2026-07-24)
-**Verdict:** ✅ v0.4 B5 complete; **pytest tests/ → 61 passed, 1 skipped in 27.47s** (exit 0); P1/P3/P4 applied, P2 deliberately kept (consistent with dashboard idiom), plus 3 latent fixes (skip-misreported-as-fail, recursion guard, clean-baseline test logic)
+Checklist counts below this block are notes from the commit that wrote them. Where they disagree with the inventory, the inventory is the tree. They are not attack-success rates.
+
+<!-- current-claims: start -->
+<!-- inventory
+collected: 103
+suites: 9
+pytest_passed_without_sentence_transformers: 102
+pytest_skipped_without_sentence_transformers: 1
+direct_runner_passes_under_gate: 101
+direct_runner_skips_under_gate: 2
+demo_contract_tests: 16
+-->
+
+`pytest tests/` with sentence-transformers not installed collects 103 tests: 102 passed and 1 skipped. The skipped test is `test_sentence_transformer_if_available`.
+
+`python scripts/ci_regression.py --strict` on that same machine reports 101 passes and 2 skips across 9 suites. The extra skip is `test_d4_evaluate_regression_detection`, which the gate's recursion guard skips and which is not counted as a pass.
+
+`python -m unittest demo/test_demo.py` is 16 contract tests. It is not added into either count above.
+<!-- current-claims: end -->
+
+**Status:** v0.4 B6 code plus an inventory drift guard. The header that used to say "61 passed" and the later table that said "86 passed" and "93/93 across 7 suites" were snapshots, and the 93 counted skips as passes.
 
 ---
 
@@ -53,10 +72,10 @@
 | V12 | Compositional Attacks | critical | 4 |
 | **Total** | — | — | **50** |
 
-Severity distribution:
-- medium: 16 (32%)
-- high: 35 (70%)
-- critical: 11 (22%)
+Severity of the 50 samples in `data/attack_vectors.json` (counted from that file, not a measured attack rate):
+- high: 24 (48%)
+- medium: 17 (34%)
+- critical: 9 (18%)
 
 ### 2. Defense Layers (5 modules)
 
@@ -118,21 +137,9 @@ Running 50 rounds of red-vs-blue simulation...
 yield more realistic per-attack success rates. The infrastructure is verified
 to be operational.
 
-### Test suite aggregate (v0.4 B6)
+### Test suite aggregate
 
-| Suite | Tests | Status |
-|---|---|---|
-| `tests/test_targets.py` | 9 | PASS |
-| `tests/test_v03.py` | 17 | PASS |
-| `tests/test_v04.py` | 10 (incl. 1 skip-as-pass) | PASS |
-| `tests/test_v04_storage.py` | 11 | PASS |
-| `tests/test_v04_b3.py` | 9 | PASS |
-| `tests/test_v04_b4.py` | 6 | PASS |
-| `tests/test_v04_b6.py` | 25 | PASS (v0.4 B6 coverage sprint) |
-| `tests/test_v04_b6_calib_history.py` | 6 | PASS (v0.4 B6 dashboard tab) |
-| **Total (pytest)** | **86 passed, 1 skipped in 28.31s** | PASS |
-| **CI gate (`ci_regression.py --strict`)** | **93 / 93 across 7 suites** | PASS |
-| **Multi-Python matrix (`ci_multi_python.py --quick`)** | **3.10 + 3.11 + 3.12 — 4 suites each, all PASS** | PASS |
+Superseded. The 86 / 93 / "7 suites" figures that used to be in this table do not match the tree. Use the inventory block at the top. The multi-Python command is not part of `make check`; a local run that cannot find Python 3.10 skips that cell rather than passing it.
 
 ## Known Limitations (v0.2)
 
@@ -200,9 +207,7 @@ to be operational.
 
 ### B6 Final state
 
-- [x] `pytest tests/` → **86 passed, 1 skipped in 28.31s** (exit 0)
-- [x] `python scripts/ci_regression.py --strict` → **93/93 passed across 7 suites** (exit 0)
-- [x] `python scripts/ci_multi_python.py --quick` → 3 × Python × 4 suites × all PASS
+The two checkboxes that used to quote 86 passed and 93/93 across 7 suites are removed. BASELINE had 8 files then, not 7, and the direct runner counted skips as passes. Current counts are the inventory block at the top.
 
 ## v0.4 B5 Deliverables Checklist (polish, NEW)
 

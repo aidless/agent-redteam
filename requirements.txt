@@ -1,5 +1,7 @@
 # Agent Red Team Platform — runtime + dev dependencies
-# Used by both local venv setup and CI (.github/workflows/ci.yml)
+# CI installs this file (.github/workflows/ci.yml). It does not install
+# requirements.lock. That lock was compiled from a different relative path
+# and pins different versions. There is no PyPI package.
 
 # --- Core runtime ---
 openai==2.47.0          # OpenAI LLM target

@@ -6,7 +6,7 @@ name: CI multi-Python matrix
 #
 # Triggers only on manual dispatch (workflow_dispatch) and weekly cron
 # (Mondays 06:00 UTC) to keep PR CI fast. Pushes & PRs still go
-# through ci.yml (3.11 only).
+# through ci.yml (Python 3.11 and 3.12). This workflow adds 3.10.
 
 on:
   workflow_dispatch:
@@ -50,7 +50,8 @@ jobs:
                        tests/test_v04_b3.py \
                        tests/test_v04_b4.py \
                        tests/test_v04_b6.py \
-                       tests/test_v04_b6_calib_history.py; do
+                       tests/test_v04_b6_calib_history.py \
+                       tests/test_inventory.py; do
             echo "=== $suite ==="
             # `|| true` pinned this step to exit 0: every suite could fail and the
             # step would still be green. Accumulate the failure and exit non-zero

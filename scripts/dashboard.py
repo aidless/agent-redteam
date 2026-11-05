@@ -558,13 +558,12 @@ st.markdown("---")
 st.markdown("""
 **About this dashboard**
 
-This is the companion Streamlit dashboard for the Agent Red Team Platform
-(F:/Research/projects/agent_redteam/), developed as a companion artifact to
-the survey §8 "Theme 6 — Security: Prompt Injection and Red-Team Attacks".
+This is the Streamlit dashboard for this repository.
+The charted block rate is whatever the selected target did on this harness's prompts.
+On the mock target that is a canned reply, not an attack-success rate.
 
-- [Survey §8](F:/Research/PAPER_SURVEY/llm_agent_calibration_survey.md#8-theme-6--security-prompt-injection-and-red-team-attacks)
-- [Attack Taxonomy (12 vectors)](F:/Research/projects/agent_redteam/data/attack_vectors.json)
-- [Source Code](F:/Research/projects/agent_redteam/scripts/run_redteam.py)
+- Payloads: `data/attack_vectors.json`
+- Runner: `scripts/run_redteam.py`
 
 Anonymous Authors (TMLR double-blind compliant).
 """)
