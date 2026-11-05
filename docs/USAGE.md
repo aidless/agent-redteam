@@ -1,53 +1,32 @@
 # Agent Red Team Platform — Usage Guide
 
-## Quickstart
+## Offline and live
 
-### 1. Install dependencies
-
-The platform uses Python 3.11 (uv-managed). Install required packages:
+Install from this repo. There is no PyPI package. CI installs `requirements.txt`, not `requirements.lock`.
 
 ```bash
-python3 \
-    -m pip install streamlit
+pip install -r requirements.txt
 ```
 
-Optional (for production deployments):
-```bash
-pip install pandas matplotlib plotly
-```
-
-### 2. Run a simulation from the command line
+**Offline (no API key).** `make check` runs the pytest suite, the demo contract tests, and `scripts/ci_regression.py --strict`. Counts are the inventory block in the README. The commands below do not spend money:
 
 ```bash
-cd F:/Research/projects/agent_redteam
-python scripts/run_redteam.py --rounds 100 --seed 42 --output outputs/redteam_results.json
+make check
+python demo/cli.py
+python scripts/run_redteam.py --target mock --rounds 5 --no-record
 ```
 
-Expected output:
+The mock runner prints a block rate. That number is the orchestrator plus a canned reply on this harness's prompts. It is not an attack-success rate. This page does not quote one. `SingleAgentOrchestrator` does not call the tool-whitelist layer, and a `MODIFY` or `FLAG` still counts as the attack succeeding. See `FAILURE_MODES.md`.
+
+**Live API (not part of CI or the inventory).** Requires a key or a local server. Still not a measurement of a real attacker.
+
+```bash
+python scripts/run_redteam.py --target openai --model gpt-4o-mini --rounds 20 --max-cost-usd 5
+python scripts/run_redteam.py --target anthropic --rounds 20 --max-cost-usd 5
+python scripts/run_redteam.py --target local --rounds 20
 ```
-Running 100 rounds of red-vs-blue simulation...
 
-=== Results ===
-  Rounds: 100
-  Attacks blocked: 85 (85.0%)
-  Attacks succeeded: 15
-
-=== Block rate by defense layer ===
-  input_separation        :  22 (22.0%)
-  tool_whitelist          :  18 (18.0%)
-  output_filter           :  16 (16.0%)
-  behavior_audit          :  14 (14.0%)
-  constitutional          :  15 (15.0%)
-
-=== Avg defense latency ===
-  input_separation        :   0.45 ms
-  tool_whitelist          :   0.32 ms
-  output_filter           :   1.20 ms
-  behavior_audit          :   0.85 ms
-  constitutional          :   0.50 ms
-
-=== Results saved to outputs/redteam_results.json ===
-```
+Keys are `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and `LOCAL_LLM_API_KEY`. Copy `.env.example` to `.env` if you want them in a file. Do not commit `.env`.
 
 ### 3. Launch the Streamlit dashboard
 
@@ -114,19 +93,18 @@ constitutional:
 4. Update `scripts/dashboard.py` sidebar `DEFENSE_INFO`.
 5. Update `README.md` defense stack documentation.
 
-## Interpreting Results
+## Interpreting results
 
-| Metric | What it tells you |
+The CLI fields are counts inside this run, not a security claim.
+
+| Field | What it is |
 |---|---|
-| **Block rate** | Overall defense effectiveness (0-100%) |
-| **Block rate by layer** | Which defense layer catches which attacks |
-| **Per-attack success rate** | Which attack vectors bypass defenses |
-| **Defense latency** | Per-layer processing overhead (production: target <5ms) |
-| **Attacks succeeded** | Total successful compromises (target: 0 in production) |
+| Block rate | Share of rounds where some layer returned `BLOCK` |
+| Block rate by layer | How often that layer was the one that returned `BLOCK` |
+| Attacks succeeded | Rounds where nothing returned `BLOCK`, including rounds that were only modified or flagged |
+| Defense latency | Time spent inside `Defense.check` on this machine |
 
-A defense is considered effective if **block rate ≥ 90%** for high-severity
-attacks (V01, V02, V05, V06, V07) and **block rate ≥ 95%** for critical-severity
-attacks (V08, V09, V12).
+This harness does not define a pass threshold on those rates. A number from the mock target does not transfer to a live model.
 
 ## Extending the Platform
 
@@ -174,6 +152,6 @@ Apache 2.0. See `LICENSE` file.
 
 ## References
 
-- F:/Research/PAPER_SURVEY/llm_agent_calibration_survey.md (§8 Theme 6)
-- F:/Research/projects/agent_redteam/README.md
-- F:/Research/projects/agent_redteam/data/attack_vectors.json
+- `README.md`
+- `FAILURE_MODES.md`
+- `data/attack_vectors.json`

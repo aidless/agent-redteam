@@ -292,11 +292,15 @@ class MultiAgentOrchestrator:
     # ---- helpers ----
 
     def _run_defenses_on_output(self, text: str) -> List[str]:
-        """Run output-side defenses (layers 3, 4, 5) on one agent text."""
+        """Run output_filter and constitutional on one agent text.
+
+        behavior_audit (layer 4) and tool_whitelist (layer 2) are not called.
+        See FAILURE_MODES.md.
+        """
         blocked: List[str] = []
         for d in self.defenses:
             try:
-                # Layer 3 = output_filter, 4 = behavior_audit, 5 = constitutional
+                # Only layer 3 (output_filter) and layer 5 (constitutional).
                 if d.layer_index in (3, 5):
                     r = d.check({"role": "assistant", "content": text})
                     if getattr(r, "action", None) is not None and \

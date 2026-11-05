@@ -9,9 +9,9 @@ These tests cover the 6 v0.3 additions:
 - A6 tradeoff module (Pareto + GSM8K proxy shape)
 
 Run with:
-    .venv/Scripts/python.exe -m pytest tests/test_v03.py -v
+    python -m pytest tests/test_v03.py -v
 or directly:
-    .venv/Scripts/python.exe tests/test_v03.py
+    python tests/test_v03.py
 """
 
 from __future__ import annotations

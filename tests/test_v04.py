@@ -147,34 +147,13 @@ def test_default_embedder_fallback():
 # ---------------------------------------------------------------------------
 
 def _run_all() -> int:
+    # Skips are not passes. pytest reports them separately, and so does this
+    # runner. Counting a skip as a pass made the CI gate look like 10/10
+    # while pytest reported 9 passed and 1 skipped.
+    from scripts.suite_inventory import execute_direct
     tests = [(n, fn) for n, fn in globals().items()
              if n.startswith("test_") and callable(fn)]
-    passed = failed = 0
-    # Skip can be either pytest's Skipped (when pytest is available; note it
-    # subclasses BaseException, NOT Exception) or our legacy _Skip marker.
-    # Both must be counted as passes so the direct runner agrees with
-    # `pytest tests/`.
-    SKIP_TYPES = ("_Skip", "Skipped")
-    for name, fn in tests:
-        try:
-            fn()
-        except AssertionError as e:
-            failed += 1
-            print(f"  FAIL  {name}: {e}")
-        except BaseException as e:
-            # BaseException catches both Exception subclasses and pytest's
-            # Skipped (which inherits from BaseException, not Exception).
-            if type(e).__name__ in SKIP_TYPES:
-                passed += 1
-                print(f"  skip  {name}: {e}")
-                continue
-            failed += 1
-            print(f"  ERROR {name}: {type(e).__name__}: {e}")
-        else:
-            passed += 1
-            print(f"  ok    {name}")
-    print(f"\n{passed}/{passed+failed} tests passed")
-    return 0 if failed == 0 else 1
+    return execute_direct(tests)
 
 
 if __name__ == "__main__":

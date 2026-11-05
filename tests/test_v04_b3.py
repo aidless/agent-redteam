@@ -10,7 +10,7 @@ Covers:
   current PASS count; ``--soft`` mode reports but doesn't fail.
 
 Run with:
-    .venv/Scripts/python.exe tests/test_v04_b3.py
+    python tests/test_v04_b3.py
 """
 
 from __future__ import annotations
@@ -223,31 +223,12 @@ def test_d4_evaluate_clean():
 # ---------------------------------------------------------------------------
 
 def _run_all() -> int:
+    # Skips are not passes. The recursion-guard skip must show up as a skip
+    # so the gate cannot book it as one of the 9 passes.
+    from scripts.suite_inventory import execute_direct
     tests = [(name, fn) for name, fn in globals().items()
              if name.startswith("test_") and callable(fn)]
-    passed = failed = 0
-    # Skip can be either pytest's Skipped (BaseException subclass) or legacy
-    # _Skip marker. Both must be counted as passes so the direct runner
-    # agrees with `pytest tests/`.
-    SKIP_TYPES = ("_Skip", "Skipped")
-    for name, fn in tests:
-        try:
-            fn()
-        except AssertionError as e:
-            failed += 1
-            print(f"  FAIL  {name}: {e}")
-        except BaseException as e:
-            if type(e).__name__ in SKIP_TYPES:
-                passed += 1
-                print(f"  skip  {name}: {e}")
-                continue
-            failed += 1
-            print(f"  ERROR {name}: {type(e).__name__}: {e}")
-        else:
-            passed += 1
-            print(f"  ok    {name}")
-    print(f"\n{passed}/{passed+failed} tests passed")
-    return 0 if failed == 0 else 1
+    return execute_direct(tests)
 
 
 if __name__ == "__main__":

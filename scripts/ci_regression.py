@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import subprocess
 import sys
 import time
@@ -34,28 +33,47 @@ from typing import Dict, List, Optional, Tuple
 ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = ROOT / "tests"
 
+if __package__:
+    from .suite_inventory import (  # type: ignore
+        parse_direct_output,
+        unexpected_skips,
+    )
+else:
+    import importlib.util
 
-# Baseline: minimum PASS count per suite. Maintained by
-# ``--update-baseline``. If you intend to permanently drop a test,
-# delete the suite here intentionally.
+    _inv_path = Path(__file__).resolve().parent / "suite_inventory.py"
+    _spec = importlib.util.spec_from_file_location("suite_inventory", _inv_path)
+    _inv = importlib.util.module_from_spec(_spec)
+    assert _spec.loader is not None
+    _spec.loader.exec_module(_inv)
+    parse_direct_output = _inv.parse_direct_output
+    unexpected_skips = _inv.unexpected_skips
+
+
+# Floor: minimum number of tests that must actually pass. A skip is not a
+# pass. The two allowed skips (optional embedder, recursion guard) are
+# subtracted in scripts/suite_inventory.py, and tests/test_inventory.py
+# fails if this dict drifts from that count.
 BASELINE: Dict[str, int] = {
-    "test_targets.py":      9,    # v0.2 LLM target smoke tests
-    "test_v03.py":         17,    # v0.3 six-task additions
-    "test_v04.py":         10,    # v0.4 B1 pluggable embedders (10 incl. 1 skip-as-pass)
-    "test_v04_storage.py": 11,    # v0.4 B2 SQLite storage
-    "test_v04_b3.py":       9,    # v0.4 B3 CI gate + post-run calibration
-    "test_v04_b4.py":       6,    # v0.4 B4 load_config + workflow + dashboard
-    "test_v04_b6.py":              25,    # v0.4 B6 coverage sprint (factories + 7 aggregators + 4 attacks + Recorder + MultiAgent edges)
-    "test_v04_b6_calib_history.py": 6,    # v0.4 B6 dashboard Historical Calibration tab (list/filter/limit + storage helpers)
+    "test_targets.py":      9,
+    "test_v03.py":         17,
+    "test_v04.py":          9,    # 10 functions; embedder skip is not a pass
+    "test_v04_storage.py": 11,
+    "test_v04_b3.py":       8,    # 9 functions; recursion-guard skip is not a pass
+    "test_v04_b4.py":       6,
+    "test_v04_b6.py":      25,
+    "test_v04_b6_calib_history.py": 6,
+    "test_inventory.py":   10,
 }
 
 
-PASS_RE = re.compile(r"(\d+)\s*/\s*(\d+)\s*tests?\s*passed", re.IGNORECASE)
-RESULTS_LINE_RE = re.compile(r"Results:\s*(\d+)\s*passed,\s*(\d+)\s*failed", re.IGNORECASE)
+def run_suite(suite: str, pyexe: str = sys.executable):
+    """Run one suite.
 
-
-def run_suite(suite: str, pyexe: str = sys.executable) -> Tuple[int, int, float]:
-    """Run one suite, return (passed, total, wall_seconds)."""
+    Returns ``(passed, total, wall_seconds, skipped, reasons)``.
+    ``passed`` does not include skips. A 3-tuple is still accepted by
+    ``evaluate`` so older tests can monkeypatch this function.
+    """
     t0 = time.time()
     # Pass a recursion-guard env var so a suite that itself calls
     # ``ci_regression.evaluate()`` (e.g. test_v04_b3 D4) does NOT recursively
@@ -69,20 +87,16 @@ def run_suite(suite: str, pyexe: str = sys.executable) -> Tuple[int, int, float]
         env=child_env,
     )
     elapsed = time.time() - t0
-    out = proc.stdout + "\n" + proc.stderr
-
-    # v0.2-style: "Results: N passed, M failed"
-    m = RESULTS_LINE_RE.search(out)
-    if m:
-        return int(m.group(1)), int(m.group(1)) + int(m.group(2)), elapsed
-
-    # v0.3+ style: "N/M tests passed"
-    m = PASS_RE.search(out)
-    if m:
-        return int(m.group(1)), int(m.group(2)), elapsed
-
-    # Fall back: assume zero on parse failure
-    return 0, 0, elapsed
+    parsed = parse_direct_output(proc.stdout + "\n" + proc.stderr)
+    if not parsed["parse_ok"]:
+        return 0, 0, elapsed, 0, {}
+    return (
+        parsed["passed"],
+        parsed["total"],
+        elapsed,
+        parsed["skipped"],
+        parsed["reasons"],
+    )
 
 
 def evaluate(strict: bool) -> Tuple[List[dict], bool, List[str]]:
@@ -153,21 +167,52 @@ def evaluate(strict: bool) -> Tuple[List[dict], bool, List[str]]:
             })
             warnings.append(f"{suite}: skipped (recursive invocation guard)")
             continue
-        passed, total, elapsed = run_suite(suite)
-        regression = passed < baseline
+        raw = run_suite(suite)
+        if len(raw) == 3:
+            passed, total, elapsed = raw
+            skipped = 0
+            reasons: Dict[str, str] = {}
+            failed = max(0, total - passed)
+        else:
+            passed, total, elapsed, skipped, reasons = raw
+            failed = total - passed - skipped
+        unexpected = unexpected_skips(suite, reasons) if reasons else []
+        parse_ok = total > 0 and failed >= 0
+        regression = (
+            (not parse_ok)
+            or failed > 0
+            or passed < baseline
+            or bool(unexpected)
+        )
         results.append({
             "suite": suite,
             "passed": passed,
+            "skipped": skipped,
+            "failed": failed,
             "total": total,
             "baseline": baseline,
             "elapsed_seconds": round(elapsed, 2),
             "regression": regression,
-            "parse_ok": total > 0,
+            "parse_ok": parse_ok,
+            "skip_reasons": dict(reasons),
         })
-        if regression:
+        if passed < baseline:
             any_regression = True
-            msg = f"{suite}: {passed}/{total} PASS — BELOW baseline {baseline}"
-            warnings.append(msg)
+            warnings.append(
+                f"{suite}: {passed}/{total} PASS — BELOW baseline {baseline}"
+            )
+        elif failed > 0 or unexpected or not parse_ok:
+            any_regression = True
+            if failed > 0:
+                warnings.append(
+                    f"{suite}: {failed} failed — a failure is not covered by the pass floor"
+                )
+            if unexpected:
+                warnings.append(
+                    f"{suite}: unexpected skip {unexpected}"
+                )
+            if not parse_ok:
+                warnings.append(f"{suite}: unparseable direct-runner output")
 
     # Also: if any suite failed to parse, surface that
     parse_fail = [r for r in results if not r["parse_ok"]]
@@ -215,14 +260,20 @@ def main() -> int:
     else:
         print(f"=== CI regression gate ({'STRICT' if ns.strict else 'soft'}) ===")
         total_pass = sum(r["passed"] for r in results)
-        total_baseline = sum(r["baseline"] for r in results)
+        total_skip = sum(r.get("skipped", 0) for r in results)
+        total_fail = sum(r.get("failed", 0) for r in results)
         for r in results:
             tag = "OK " if not r["regression"] else "WARN"
-            print(f"  [{tag}] {r['suite']:24s} {r['passed']:>3}/{r['total']:<3} "
-                  f"(baseline={r['baseline']}, "
-                  f"{r['elapsed_seconds']}s)")
-        print(f"\n  Total: {total_pass}/{total_baseline} tests passing across "
-              f"{len(results)} suites")
+            print(
+                f"  [{tag}] {r['suite']:24s} "
+                f"passed={r['passed']} skipped={r.get('skipped', 0)} "
+                f"failed={r.get('failed', 0)} "
+                f"(floor={r['baseline']}, {r['elapsed_seconds']}s)"
+            )
+        print(
+            f"\n  {total_pass} passed, {total_skip} skipped, {total_fail} failed "
+            f"across {len(results)} suites. Skips are not passes."
+        )
         if warnings:
             print(f"\n  Warnings ({len(warnings)}):")
             for w in warnings:

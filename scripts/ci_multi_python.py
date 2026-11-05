@@ -17,7 +17,7 @@ Usage
 
 Exit code
 ---------
-0  - every available Python passed (>= baseline per suite)
+0  - every available Python met the floor, with no failures and no unexpected skips
 1  - at least one Python regressed OR we hit a hard setup error
 2  - no usable Python found
 """
@@ -57,19 +57,26 @@ QUICK_SUITES = (
     "test_v04_b6_calib_history.py",
 )
 
-# Mirror of the baseline in scripts/ci_regression.py (kept duplicated
-# here so ci_multi_python can run independently — does not import
-# ci_regression to avoid a circular invocation risk).
-BASELINE: Dict[str, int] = {
-    "test_targets.py":                9,
-    "test_v03.py":                   17,
-    "test_v04.py":                   10,
-    "test_v04_storage.py":           11,
-    "test_v04_b3.py":                 9,
-    "test_v04_b4.py":                 6,
-    "test_v04_b6.py":                25,
-    "test_v04_b6_calib_history.py":   6,
-}
+# Same floor as scripts/ci_regression.py. Importing the dict does not run
+# the gate. A second handwritten copy is how the two denominators drifted.
+if __package__:
+    from .ci_regression import BASELINE
+    from .suite_inventory import parse_direct_output, unexpected_skips
+else:
+    import importlib.util
+
+    def _load(name: str):
+        path = Path(__file__).resolve().parent / f"{name}.py"
+        spec = importlib.util.spec_from_file_location(name, path)
+        mod = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(mod)
+        return mod
+
+    BASELINE = _load("ci_regression").BASELINE
+    _inventory = _load("suite_inventory")
+    parse_direct_output = _inventory.parse_direct_output
+    unexpected_skips = _inventory.unexpected_skips
 
 
 # ---------------------------------------------------------------------------
@@ -215,32 +222,30 @@ def run_one(pyexe: str, suites: List[str], venv_dir: Path) -> Dict:
             cwd=str(ROOT),
         )
         elapsed = round(time.time() - ts, 2)
-        passed, total = _parse_runner_output(proc.stdout + proc.stderr)
+        parsed = parse_direct_output(proc.stdout + proc.stderr)
+        passed, total = parsed["passed"], parsed["total"]
         baseline = BASELINE.get(suite, 0)
+        failed = parsed["failed"]
+        unexpected = unexpected_skips(suite, parsed["reasons"])
         res["results"].append({
             "suite": suite,
             "passed": passed,
+            "skipped": parsed["skipped"],
+            "failed": failed,
             "total": total,
             "baseline": baseline,
             "elapsed_seconds": elapsed,
-            "regression": passed < baseline,
+            "regression": (
+                (not parsed["parse_ok"])
+                or failed > 0
+                or passed < baseline
+                or bool(unexpected)
+            ),
             "exit_code": proc.returncode,
         })
 
     res["elapsed_seconds"] = round(time.time() - t0, 2)
     return res
-
-
-def _parse_runner_output(text: str) -> Tuple[int, int]:
-    """Parse '<passed>/<total> tests passed' from runner stdout.
-
-    Falls back to (0, 0) if not found — caller treats that as parse fail.
-    """
-    import re
-    m = re.search(r"(\d+)\s*/\s*(\d+)\s*tests?\s*passed", text, re.IGNORECASE)
-    if not m:
-        return 0, 0
-    return int(m.group(1)), int(m.group(2))
 
 
 def emit_markdown(rows: List[Dict]) -> str:

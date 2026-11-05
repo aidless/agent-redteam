@@ -370,19 +370,5 @@ if __name__ == "__main__":
         test_a5_multi_agent_zero_rounds_returns_empty,
         test_a5_multi_agent_single_agent_no_verifier,
     ]
-    passed = failed = 0
-    SKIP_TYPES = ("_Skip", "Skipped")
-    for t in tests:
-        try:
-            t()
-            print(f"  ok    {t.__name__}")
-            passed += 1
-        except BaseException as e:
-            if type(e).__name__ in SKIP_TYPES:
-                passed += 1
-                print(f"  skip  {t.__name__}: {e}")
-                continue
-            print(f"  FAIL  {t.__name__}: {type(e).__name__}: {e}")
-            failed += 1
-    print(f"\n{passed}/{passed+failed} tests passed")
-    sys.exit(0 if failed == 0 else 1)
+    from scripts.suite_inventory import execute_direct
+    sys.exit(execute_direct([(t.__name__, t) for t in tests]))

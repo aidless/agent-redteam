@@ -13,11 +13,12 @@ pip install -r requirements.txt   # if present
 ## Verifying your change
 
 ```bash
-python3 -m pytest -q
+make check
 ```
 
-If the repository has a `Makefile`, `make check` or the closest equivalent runs the same
-checks as CI. Please run it before opening a pull request.
+`make check` runs `pytest tests/`, `python -m unittest demo/test_demo.py`, and
+`python scripts/ci_regression.py --strict`. That is the push/PR test job
+without the secret scan and the mutation-control job.
 
 ## Pull requests
 

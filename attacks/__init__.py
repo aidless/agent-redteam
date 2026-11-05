@@ -1,7 +1,7 @@
 """Attack vector implementations for multi-agent LLM red-teaming.
 
 This package implements the 12 attack categories described in §8.2 of the
-survey (F:/Research/PAPER_SURVEY/llm_agent_calibration_survey.md).
+survey, section 8.2. The survey text is not in this repository.
 """
 
 from .base import Attack, AttackResult, AttackSeverity

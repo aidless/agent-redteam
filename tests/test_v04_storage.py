@@ -9,9 +9,9 @@ These tests cover the storage/ package:
   tradeoff_points with is_pareto flag
 
 Run with:
-    .venv/Scripts/python.exe -m pytest tests/test_v04_storage.py -v
+    python -m pytest tests/test_v04_storage.py -v
 or directly:
-    .venv/Scripts/python.exe tests/test_v04_storage.py
+    python tests/test_v04_storage.py
 """
 
 from __future__ import annotations
