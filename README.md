@@ -106,6 +106,7 @@ agent_redteam/
 │   └── default.yaml           # Provider/model/defense/cost/multi-agent/memory/aggregator config
 ├── scripts/                   # Executable entry points
 │   ├── run_redteam.py         # Main runner (--mode {single,multi}, --record default on)
+│   ├── build_zipapp.sh        # Build self-contained agent-redteam.pyz (release asset)
 │   ├── tradeoff.py            # [v0.3] Defense-autonomy sweep + run_tradeoff_recorded()
 │   └── dashboard.py           # Streamlit dashboard (4 tabs: Sim / Tradeoff / Calibration / History)
 ├── tests/                     # pytest suite: 92 passing (1 skipped)
@@ -150,6 +151,30 @@ python scripts/ci_regression.py --strict
 # Multi-Python matrix (3.10 / 3.11 / 3.12)
 python scripts/ci_multi_python.py --quick
 ```
+
+## Install from release (no clone)
+
+A self-contained zipapp is attached to each release — mock target and all 5 defense layers run fully offline inside it:
+
+```bash
+curl -L -o agent-redteam.pyz https://github.com/aidless/agent-redteam/releases/download/v0.4.0/agent-redteam.pyz
+python3 agent-redteam.pyz --target mock --rounds 100 --no-record
+```
+
+Built by `scripts/build_zipapp.sh`. Verified 2026-11-10: `--target mock --rounds 3 --no-record` inside the pyz (run outside any checkout) executes 3 attacks through all 5 defense layers and writes `outputs/redteam_results.json`. Scope note: `--config` and `data/attack_vectors.json` resolve from the CWD, so for custom configs or the full 50-sample dataset run from a checkout (Quickstart above).
+
+## Limits and Scope
+
+**What this platform is:** an offline, reproducible *evaluation harness*. The 12 attack categories, 5 defense layers, 7 aggregators, and 3 memory architectures are instrumented components you run and measure — the mock target makes every red-vs-blue round deterministic and free.
+
+**What it is not (and does not claim to be):**
+
+- **Not an offensive toolkit.** Attack payloads are synthetic fixtures defined in `attacks/v01..v12` and `data/attack_vectors.json`; the harness simulates their delivery against an in-process target. It performs no real-world exploitation, scanning, or delivery against any external system.
+- **Not a deployable defense product.** The 5 defense layers are evaluation instruments inside the harness. Their block/flag decisions are real code paths, but they are not hardened, audited production guards — do not deploy them as your security boundary.
+- **Mock numbers do not transfer.** Block rates on `--target mock` characterize the defense layers, not real models. `openai`/`anthropic` targets are nondeterministic, cost money, and are subject to provider-side behavior; no cross-provider equivalence is claimed.
+- **Not a benchmark.** There is no reference leaderboard or gold result set; all metrics (block rate, calibration ECE/JSD, tradeoff Pareto points) are relative to your own runs and seeds.
+- **Single machine.** Persistence is a local WAL-mode SQLite file (`storage/agent_redteam.db`); no distributed orchestration, no concurrency guarantees.
+- **Out of scope attack surfaces:** streaming/multimodal attacks, sandboxed real tool execution, and persistence attacks beyond the three simulated memory architectures are not modeled.
 
 ## Relationship to Survey
 
