@@ -31,3 +31,4 @@ This repository is developer tooling that runs locally with your own API keys. R
 are welcome and will be tracked; issues in upstream services are out of scope.
 
 Keys are read from the environment and never committed; a report that a key was committed is in scope.
+Release 资产用此密钥（SIGNING_KEY.asc）签名，验证命令 `gpg --verify <asset>.asc <asset>`。
