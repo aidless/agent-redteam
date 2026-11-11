@@ -38,8 +38,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          python -m pip --version
+          python -m pip install --require-hashes -r requirements.ci.lock
 
       - name: Run direct test suite
         # Direct runner is more portable than pytest across interpreter
