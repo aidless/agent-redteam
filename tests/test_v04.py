@@ -71,21 +71,25 @@ def test_char_ngram_subword_match():
 # ---------------------------------------------------------------------------
 
 def test_sentence_transformer_if_available():
-    """Only run when sentence-transformers is actually installed."""
+    """Only run when sentence-transformers is installed and actually usable."""
     try:
         from memory import SentenceTransformerEmbedder
         st = SentenceTransformerEmbedder()
-    except ImportError:
-        # Skip — no ST installed in this env. Use the unified skip path so
-        # BOTH the direct runner (`python tests/test_v04.py`) AND pytest
-        # report this as a skip, not a failure.
+    except Exception as e:
+        # 这里原本只捕 ImportError。但 SentenceTransformerEmbedder 的构造除了
+        # import 还要把模型拉下来：装了库而 HF 不可达时抛的是 OSError /
+        # LocalEntryNotFoundError（都不继承 ImportError），于是「离线环境」
+        # 被判成失败而不是跳过。实测症状：整套 tests/ 先卡住数分钟等下载，
+        # 超时后报 OSError。改成捕 Exception——前置条件就是「能构造出来」。
+        # Use the unified skip path so BOTH the direct runner
+        # (`python tests/test_v04.py`) AND pytest report this as a skip.
         try:
             import pytest as _pytest
-            _pytest.skip("sentence-transformers not installed")
+            _pytest.skip(f"sentence-transformers unusable: {type(e).__name__}: {e}")
         except ImportError:
             class _Skip(Exception):
                 pass
-            raise _Skip("sentence-transformers not installed")
+            raise _Skip(f"sentence-transformers unusable: {type(e).__name__}") from e
     vecs = st.embed(["hello world", "goodbye world"])
     assert len(vecs) == 2
     assert all(len(v) == st.dim for v in vecs)

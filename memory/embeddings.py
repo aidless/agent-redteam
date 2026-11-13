@@ -274,12 +274,20 @@ def default_embedder(prefer: str = "sentence_transformer") -> Embedder:
             continue
         seen.add(name)
         if name == "sentence_transformer":
+            # 这里不能只捕 ImportError。SentenceTransformerEmbedder 的构造除了
+            # import 之外还会把模型拉下来：装了 sentence-transformers 但 HF
+            # 不可达（无网/离线/缓存缺失）时抛的是 OSError 或
+            # huggingface_hub.errors.LocalEntryNotFoundError，两者都不是
+            # ImportError，会直接穿出 factory，让整条降级链失效。
+            # 实测症状：tests/test_v04.py::test_default_embedder_fallback 先
+            # 卡住等下载数分钟，再报 OSError；同时 test_v04 里那两条与 ST
+            # 相关的用例把「离线环境」变成失败而不是跳过。
             try:
                 return SentenceTransformerEmbedder()
-            except ImportError as e:
+            except Exception as e:
                 warnings.warn(
                     f"[embeddings] sentence-transformers unavailable "
-                    f"({e}); falling back to char_ngram",
+                    f"({type(e).__name__}: {e}); falling back to char_ngram",
                     RuntimeWarning,
                     stacklevel=2,
                 )

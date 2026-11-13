@@ -13,7 +13,6 @@
 ## Test counts: three different denominators
 
 三个分母，测的是三件不同的事，**不要相加**。全部数字在 2026-11-13 这台机器上现测：
-
 | 口径 | 命令 | 实测 | 它守什么 |
 |---|---|---|---|
 | **93** | `python3 scripts/ci_regression.py --strict` | 8 套件 BASELINE 合计 93（9+17+10+11+9+6+25+6） | 回归门：只惩罚「新失败/由绿转红」 |
