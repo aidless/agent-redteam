@@ -1,0 +1,129 @@
+{
+ "total": 20,
+ "passed": 20,
+ "failed": 0,
+ "selftest": false,
+ "failed_by_axis": {},
+ "results": [
+  {
+   "id": "C01",
+   "axis": "metrics",
+   "ok": true,
+   "detail": "0.16666666666666666"
+  },
+  {
+   "id": "C02",
+   "axis": "metrics",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "id": "C03",
+   "axis": "metrics",
+   "ok": true,
+   "detail": "inf"
+  },
+  {
+   "id": "C04",
+   "axis": "dataset",
+   "ok": true,
+   "detail": "[50, 12, 12, 50]"
+  },
+  {
+   "id": "C05",
+   "axis": "attacks",
+   "ok": true,
+   "detail": "(12, 50, True)"
+  },
+  {
+   "id": "C06",
+   "axis": "attacks",
+   "ok": true,
+   "detail": "raised KeyError"
+  },
+  {
+   "id": "C07",
+   "axis": "attacks",
+   "ok": true,
+   "detail": "(False, True)"
+  },
+  {
+   "id": "C08",
+   "axis": "aggregators",
+   "ok": true,
+   "detail": "(1, 0.666667, 'MajorityVote')"
+  },
+  {
+   "id": "C09",
+   "axis": "aggregators",
+   "ok": true,
+   "detail": "7"
+  },
+  {
+   "id": "C10",
+   "axis": "aggregators",
+   "ok": true,
+   "detail": "raised KeyError"
+  },
+  {
+   "id": "C11",
+   "axis": "defenses",
+   "ok": true,
+   "detail": "block"
+  },
+  {
+   "id": "C12",
+   "axis": "defenses",
+   "ok": true,
+   "detail": "('block', 'allow')"
+  },
+  {
+   "id": "C13",
+   "axis": "defenses",
+   "ok": true,
+   "detail": "('modify', True)"
+  },
+  {
+   "id": "C14",
+   "axis": "memory",
+   "ok": true,
+   "detail": "(3, ['e3', 'e2'], [])"
+  },
+  {
+   "id": "C15",
+   "axis": "memory",
+   "ok": true,
+   "detail": "prompt injection overrides the system"
+  },
+  {
+   "id": "C16",
+   "axis": "storage",
+   "ok": true,
+   "detail": "(1, 1, 'single', 0, 0.0)"
+  },
+  {
+   "id": "C17",
+   "axis": "demo",
+   "ok": true,
+   "detail": "(12, 5, 10, 11, 0, ['V12_compositional'])"
+  },
+  {
+   "id": "C18",
+   "axis": "demo",
+   "ok": true,
+   "detail": "('MATCH', 18, True)"
+  },
+  {
+   "id": "C19",
+   "axis": "docs",
+   "ok": true,
+   "detail": "## 验收标准与复算"
+  },
+  {
+   "id": "C20",
+   "axis": "docs",
+   "ok": true,
+   "detail": "失败归因"
+  }
+ ]
+}

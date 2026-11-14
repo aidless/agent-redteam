@@ -7,7 +7,12 @@
 # 加 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 让它在取模型时立刻 OSError → 走测试自己
 # 写好的 skip 路径（tests/test_v04.py:86-88），整套变 97 passed / 1 skipped，rc=0。
 # 注意：这条 skip 是「本机没有模型缓存」的既有实现，不是为跑绿而加的过滤。
+#
+# 追加一行（EVAL_ACCEPTANCE_STANDARD.md 的验收题库，见 README「验收标准与复算」）：
+# 先跑 eval/run_cases.py（20 条 expr/raises/doc 用例，任何一条失败即 exit 1），
+# 再跑既有 pytest 套件。既有命令未改动。
 .PHONY: eval
 
 eval:
+	python3 eval/run_cases.py
 	HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python3 -m pytest tests -q

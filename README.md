@@ -447,3 +447,49 @@ added in the camera-ready version.
   + `dashboard.py` with `--target` parameter and cost panel.
 - **v0.1 (2026-07-22)**: Initial scaffold. 5 defense layers, 12 attack vectors
   in JSON, mock run_redteam.py, Streamlit dashboard.
+
+---
+
+## 验收标准与复算
+
+**验收判据**：本仓判为合格的条件是 `python3 eval/run_cases.py` 通过率必须为 100%（20/20），且 `make eval` 退出码必须为 0；任何一条失败即判为不合格。
+
+### 题库与 axis
+
+`eval/cases.jsonl` 共 20 条七键用例（id/axis/question/expected/mode/verify/source）。18 条 `expr`/`raises` 真调本仓 API 或真解析 `data/attack_vectors.json`，2 条 `doc` 查本文档；期望值全部由当前实现现算，不是抄文档。
+
+| axis | 条数 | 覆盖对象 |
+|---|---|---|
+| metrics | 3 | `metrics/calibration.py`：ece / jsd / cv 的边界行为 |
+| dataset | 1 | `data/attack_vectors.json`：metadata 与各 vector 的 samples 自洽（50 条 / 12 类） |
+| attacks | 3 | `attacks/loader.py` + `attacks/_base_v03.py`：装载、未知 id、缺 orchestrator |
+| aggregators | 3 | `aggregators/`：MajorityVote 票型、registry 7 个、未知名字 |
+| defenses | 3 | input_separation / tool_whitelist / output_filter 的动作 |
+| memory | 2 | append-only 截断与 RAG top-1 |
+| storage | 1 | `storage/recorder.py`：临时库 run 落盘与聚合 |
+| demo | 2 | `demo/harness.py`：12×5 覆盖矩阵 summary 与 verification |
+| docs | 2 | 本文档的验收与归因小节 |
+
+### 三条命令
+
+```bash
+python3 eval/run_cases.py             # 期望 20/20 cases passed，exit 0
+python3 eval/run_cases.py --selftest  # 期望 19/20（第一条被篡改后必须变红），exit 0
+make eval                             # 期望 rc=0（先跑题库，再跑既有 pytest 套件）
+```
+
+### 复算说明
+
+每题 `verify` 字段就是复算代码：它真调本仓 API 或真解析本仓数据文件，期望值由当前实现现算；改一行实现就可能让它变红，这正是这套题的意义。`python3 eval/run_cases.py --save` 会重建 `eval/run-report.json`（逐题 PASS/FAIL 与按 axis 的 `failed_by_axis` 汇总），所以落盘结果随时可从题库重算，不依赖任何手工记录。
+
+### 失败归因
+
+失败不报一个总分就完事：`--json` / `--save` 里的 `failed_by_axis` 按 axis 汇总失败用例 id。示例（假设 C01、C13 变红）：
+
+```
+失败归因（按 axis）：
+  metrics: 1 条 —— C01
+  defenses: 1 条 —— C13
+```
+
+定位顺序：先看 axis 落在哪个模块，再读该题 `verify` 里的 API 调用，最后对本仓源码核对该行为是否被本意改动（验收层只报告源码问题，不改实现）。
