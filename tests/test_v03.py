@@ -17,7 +17,6 @@ or directly:
 from __future__ import annotations
 
 import math
-import os
 import sys
 from pathlib import Path
 
@@ -305,7 +304,6 @@ def test_tradeoff_run_small():
 
 def _run_all() -> int:
     """Run every test_xxx in this module. Returns 0 on success."""
-    import inspect
     tests = [(name, fn) for name, fn in globals().items()
              if name.startswith("test_") and callable(fn)]
     passed = failed = 0

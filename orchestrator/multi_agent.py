@@ -19,9 +19,8 @@ decision; the 7 aggregators collapse them into one verdict.
 from __future__ import annotations
 
 import time
-from collections import Counter
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from attacks.base import Attack
 from aggregators import (
@@ -34,7 +33,6 @@ from aggregators import (
     EMAWeightedMedian,
     KalmanFilterTrust,
     AdaptiveHybrid,
-    AGGREGATOR_REGISTRY,
 )
 from aggregators.base import VerifierOutput
 from memory.base import MemoryEntry, MemoryStore

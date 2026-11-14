@@ -7,7 +7,7 @@ and other sensitive content.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from .base import Defense, DefenseAction, DefenseResult
 
@@ -90,7 +90,7 @@ class OutputFilterDefense(Defense):
             # Suspicious — block entirely if entire response looks like a leak
             if self._looks_like_full_prompt_leak(modified_content):
                 elapsed = (time.time() - start) * 1000
-                trace.append(f"[output_filter] BLOCK: full prompt leak suspected")
+                trace.append("[output_filter] BLOCK: full prompt leak suspected")
                 return DefenseResult(
                     defense_name=self.name,
                     action=DefenseAction.BLOCK,
@@ -103,7 +103,7 @@ class OutputFilterDefense(Defense):
             # Otherwise modify/redact
             modified_content = "[REDACTED: suspected prompt leak]"
             modified = True
-            trace.append(f"[output_filter] Modified: prompt leak pattern matched")
+            trace.append("[output_filter] Modified: prompt leak pattern matched")
 
         # Length check (DoS amplification guard)
         if len(modified_content) > self.max_output_length:

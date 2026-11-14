@@ -6,7 +6,7 @@ aggregator's decision label == self.expected_label, attack succeeded.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from ._base_v03 import SampleAttack
 from .base import AttackResult, AttackSeverity

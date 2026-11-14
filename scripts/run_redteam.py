@@ -772,7 +772,7 @@ def main():
     if record_flag:
         print(f"  (recording to SQLite: {Recorder_default_db_hint()})")
     else:
-        print(f"  (--no-record: results will NOT be persisted)")
+        print("  (--no-record: results will NOT be persisted)")
     results = run_redteam(
         rounds=args.rounds,
         target_provider=args.target,
@@ -786,7 +786,7 @@ def main():
         record=record_flag,
     )
 
-    print(f"\n=== Results ===")
+    print("\n=== Results ===")
     print(f"  Version: {results['version']}")
     print(f"  Target: {results['target']['provider']} ({results['target']['model']})")
     if results.get("mode") == "multi":
@@ -799,11 +799,11 @@ def main():
         print(f"  Rounds: {results['total_rounds']}")
         print(f"  Attacks blocked: {results['attacks_blocked']} ({results['block_rate']*100:.1f}%)")
         print(f"  Attacks succeeded: {results['attacks_succeeded']}")
-        print(f"\n=== Block rate by defense layer ===")
+        print("\n=== Block rate by defense layer ===")
         for layer, count in results["block_rate_by_layer"].items():
             rate = count / results["attacks_executed"] * 100 if results["attacks_executed"] else 0
             print(f"  {layer:25s}: {count:3d} ({rate:5.1f}%)")
-        print(f"\n=== Avg defense latency ===")
+        print("\n=== Avg defense latency ===")
         for layer, ms in results["avg_defense_latency_ms"].items():
             print(f"  {layer:25s}: {ms:6.2f} ms")
     print(f"  Total cost: ${results['total_cost_usd']:.4f}")

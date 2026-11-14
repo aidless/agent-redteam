@@ -89,7 +89,7 @@ class BehaviorAuditDefense(Defense):
             self._agent_last_actions[agent] = self._agent_last_actions[agent][-self.max_consecutive_identical_actions:]
             if len(set(self._agent_last_actions[agent])) == 1:
                 elapsed = (time.time() - start) * 1000
-                trace.append(f"[behavior_audit] FLAG: repeated identical action")
+                trace.append("[behavior_audit] FLAG: repeated identical action")
                 return DefenseResult(
                     defense_name=self.name,
                     action=DefenseAction.FLAG,
@@ -104,7 +104,7 @@ class BehaviorAuditDefense(Defense):
             self._memory_writes[agent] += 1
             if self._memory_writes[agent] > self.max_memory_writes_per_turn:
                 elapsed = (time.time() - start) * 1000
-                trace.append(f"[behavior_audit] BLOCK: excessive memory writes")
+                trace.append("[behavior_audit] BLOCK: excessive memory writes")
                 return DefenseResult(
                     defense_name=self.name,
                     action=DefenseAction.BLOCK,
@@ -121,7 +121,7 @@ class BehaviorAuditDefense(Defense):
             ensemble_mean = event.get("ensemble_mean", vote_value)
             if abs(vote_value - ensemble_mean) > self.voting_outlier_threshold:
                 elapsed = (time.time() - start) * 1000
-                trace.append(f"[behavior_audit] FLAG: voting outlier detected")
+                trace.append("[behavior_audit] FLAG: voting outlier detected")
                 return DefenseResult(
                     defense_name=self.name,
                     action=DefenseAction.FLAG,

@@ -114,7 +114,7 @@ def test_rag_with_char_ngram():
 
 def test_rag_with_token_overlap_default():
     """default embedder = token overlap when sentence-transformers missing."""
-    from memory import RAGMemory, MemoryEntry, TokenOverlapEmbedder
+    from memory import RAGMemory, MemoryEntry
     rm = RAGMemory()  # default embedder
     rm.add(MemoryEntry(content="prompt injection attack"))
     rm.add(MemoryEntry(content="jailbreak template"))

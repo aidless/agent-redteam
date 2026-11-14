@@ -7,7 +7,6 @@ Run with:
 
 from __future__ import annotations
 
-import json
 import random
 import sys
 from pathlib import Path
@@ -145,7 +144,7 @@ with tab_tradeoff:
     - **Z** = attack block rate across 12 vectors
     The Pareto front (blue triangles) is computed w.r.t. (max block, max utility).
     """)
-    from scripts.tradeoff import run_tradeoff, pareto_front, GSM8K_PROXY, run_tradeoff_recorded
+    from scripts.tradeoff import run_tradeoff, pareto_front, run_tradeoff_recorded
     from targets import MockLLMTarget
     from defenses.input_separation import InputSeparationDefense
     from defenses.tool_whitelist import ToolWhitelistDefense
@@ -237,7 +236,7 @@ with tab_calib:
     ECE, JSD, H, CV, γ_temporal, γ (coupling), and the impossibility
     triangle (γ·H·CV ≥ c_min).
     """)
-    from metrics import ece, jsd, entropy, cv, gamma_temporal, coupling, impossibility_triangle
+    from metrics import ece, jsd, coupling, impossibility_triangle
     c1, c2 = st.columns(2)
     with c1:
         st.markdown("**ECE demo (15 bins)**")

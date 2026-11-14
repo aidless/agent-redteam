@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Optional
 
-from .base import Attack, AttackResult, AttackSeverity
+from .base import Attack, AttackSeverity
 from .v01_direct_injection import V01DirectInjection
 from .v02_indirect_injection import V02IndirectInjection
 from .v03_jailbreak import V03Jailbreak

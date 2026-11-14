@@ -11,7 +11,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from attacks.base import Attack, AttackResult
+from attacks.base import Attack
 from defenses.base import Defense, DefenseResult, DefenseAction
 from targets.base import LLMTarget, TargetResponse
 

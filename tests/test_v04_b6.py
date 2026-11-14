@@ -5,7 +5,6 @@ Recorder finalize / current_recorder, MultiAgentOrchestrator edge cases.
 """
 from __future__ import annotations
 
-import os
 import sys
 import tempfile
 from pathlib import Path
@@ -206,7 +205,6 @@ def test_a3_all_12_attacks_load_samples():
 
 def test_a3_v01_direct_injection_execute_no_orchestrator():
     """V01 with no orchestrator in system_state returns AttackResult(success=False, trace=[error])."""
-    from attacks.v01_direct_injection import V01DirectInjection
     vectors = _load_attacks()
     attack = vectors["V01_direct_prompt_injection"][0]
     result = attack.execute({"orchestrator": None})
@@ -216,7 +214,6 @@ def test_a3_v01_direct_injection_execute_no_orchestrator():
 
 
 def test_a3_v03_jailbreak_execute_no_orchestrator():
-    from attacks.v03_jailbreak import V03Jailbreak
     vectors = _load_attacks()
     attack = vectors["V03_jailbreak_templates"][0]
     result = attack.execute({"orchestrator": None})
@@ -225,7 +222,6 @@ def test_a3_v03_jailbreak_execute_no_orchestrator():
 
 
 def test_a3_v06_memory_poison_execute_no_orchestrator():
-    from attacks.v06_memory_poison import V06MemoryPoisoning
     vectors = _load_attacks()
     attack = vectors["V06_memory_poisoning"][0]
     result = attack.execute({"orchestrator": None})
@@ -234,7 +230,6 @@ def test_a3_v06_memory_poison_execute_no_orchestrator():
 
 
 def test_a3_v10_prompt_leak_execute_no_orchestrator():
-    from attacks.v10_prompt_leak import V10PromptLeakage
     vectors = _load_attacks()
     attack = vectors["V10_prompt_leakage"][0]
     result = attack.execute({"orchestrator": None})

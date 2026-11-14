@@ -277,9 +277,9 @@ def test_run_tradeoff_recorded_persists_points():
     from targets import MockLLMTarget
     from defenses.input_separation import InputSeparationDefense
     from defenses.output_filter import OutputFilterDefense
-    from storage import Recorder, list_tradeoff_points, list_runs
+    from storage import Recorder, list_tradeoff_points
     from pathlib import Path
-    import tempfile, os, sqlite3
+    import tempfile
 
     with tempfile.TemporaryDirectory() as td:
         db_path = str(Path(td) / "to_e2e.db")

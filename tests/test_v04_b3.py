@@ -15,8 +15,6 @@ Run with:
 
 from __future__ import annotations
 
-import json
-import os
 import sqlite3
 import sys
 import tempfile
@@ -32,9 +30,7 @@ sys.path.insert(0, str(ROOT))
 
 def test_d1_no_record_flag_resolves_to_false():
     """`scripts/run_redteam.py --no-record` resolves record=False."""
-    from scripts.run_redteam import main as _main
     # Drive argparse directly via parse_known_args by reusing the parser
-    import argparse
     # Build the parser the same way main() does. We import main() to keep
     # the duplicate code out of this test.
     import scripts.run_redteam as mod

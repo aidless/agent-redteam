@@ -23,14 +23,12 @@ import itertools
 import sys
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 # Make sibling packages importable when this file is run as a script
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from attacks.loader import load_attack_vectors
-from attacks.base import Attack
-from orchestrator.single_agent import SingleAgentOrchestrator
 from targets.base import LLMTarget
 
 
@@ -91,8 +89,6 @@ def _gsm8k_utility(target: LLMTarget,
                    enabled: Sequence[str],
                    system_prompt: str) -> float:
     """Compute utility = (# correct) / (total problems) with a given defense set."""
-    import time
-    from defenses.base import DefenseResult, DefenseAction
     defenses = [d for d in base_defenses if d.name in enabled]
     correct = 0
     for prob in GSM8K_PROXY:
@@ -126,7 +122,6 @@ def _attack_block_rate(target: LLMTarget,
                        system_prompt: str,
                        samples_per_vector: int = 1) -> float:
     """Compute block rate = (# blocked) / (total attacks) with a given defense set."""
-    from defenses.base import DefenseResult, DefenseAction
     from orchestrator.single_agent import SingleAgentOrchestrator
     defenses = [d for d in base_defenses if d.name in enabled]
     orch = SingleAgentOrchestrator(

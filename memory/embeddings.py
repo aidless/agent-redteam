@@ -31,7 +31,7 @@ import math
 import re
 import warnings
 from collections import Counter
-from typing import Iterable, List, Optional, Sequence
+from typing import List, Sequence
 
 
 # ---------------------------------------------------------------------------

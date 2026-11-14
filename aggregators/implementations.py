@@ -14,8 +14,7 @@ Numerical conventions:
 from __future__ import annotations
 
 import math
-from collections import deque
-from typing import Deque, Dict, List, Optional, Type
+from typing import Dict, List, Type
 
 from .base import Aggregator, AggregatedDecision, VerifierOutput
 

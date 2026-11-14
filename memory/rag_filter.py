@@ -9,8 +9,7 @@ defaults to `TokenOverlapEmbedder` so the v0.3 behaviour is preserved.
 from __future__ import annotations
 
 import re
-from collections import Counter
-from typing import Dict, List, Optional, Sequence
+from typing import List, Optional
 
 from .base import MemoryEntry, MemoryStore
 from .embeddings import Embedder, TokenOverlapEmbedder

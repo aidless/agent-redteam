@@ -29,7 +29,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = ROOT / "tests"
@@ -229,7 +229,7 @@ def main() -> int:
                 print(f"    - {w}")
 
         if ns.update_baseline:
-            print(f"\n=== Suggested new baseline (paste into BASELINE dict) ===")
+            print("\n=== Suggested new baseline (paste into BASELINE dict) ===")
             print(json.dumps(new_baseline, indent=2))
 
     if ns.update_baseline:
